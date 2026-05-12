@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRSLP Dataset - 数据集宣传页</title>
+  <!-- 使用 Tailwind CSS CDN，直接获得好看的样式 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 可稍作自定义 */
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  
+  <!-- 导航栏 -->
+  <nav class="gradient-bg text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">📊 CRSLP Dataset</h1>
+      <div class="space-x-4 text-sm">
+        <a href="#description" class="hover:underline">描述</a>
+        <a href="#demo" class="hover:underline">动图展示</a>
+        <a href="#leaderboard" class="hover:underline">排行榜</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主内容 -->
+  <main class="max-w-6xl mx-auto px-4 py-12">
+    
+    <!-- 数据集描述 -->
+    <section id="description" class="mb-16 text-center">
+      <h2 class="text-4xl font-extrabold mb-4 gradient-bg bg-clip-text text-transparent">数据集简介</h2>
+      <p class="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        这里是你的数据集详细描述。MyDataset 是第一个针对 XX 任务的大规模、高质量数据集，
+        包含 100 万条样本，覆盖 50 种场景，旨在推动 XX 领域的研究。
+      </p>
+      <!-- 下载/论文链接 -->
+      <div class="mt-8 flex justify-center gap-4">
+        <a href="#" class="bg-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-700 transition">
+          📥 下载数据集
+        </a>
+        <a href="#" class="bg-white border border-purple-600 text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition">
+          📄 论文链接
+        </a>
+      </div>
+    </section>
+
+    <!-- 动图展示区 -->
+    <section id="demo" class="mb-16">
+      <h2 class="text-3xl font-bold text-center mb-10">🚀 动图演示</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- 动图 1（替换成你自己的 GIF 或 MP4） -->
+        <div class="bg-white rounded-2xl shadow-md p-4">
+          <img src="https://placehold.co/600x400/EEE/999?text=Demo+GIF+1" 
+               alt="效果展示1" 
+               class="rounded-xl w-full object-cover">
+          <p class="text-center mt-3 text-sm text-gray-500">图1：场景A下的效果</p>
+        </div>
+        <!-- 动图 2 -->
+        <div class="bg-white rounded-2xl shadow-md p-4">
+          <img src="https://placehold.co/600x400/EEE/999?text=Demo+GIF+2" 
+               alt="效果展示2" 
+               class="rounded-xl w-full object-cover">
+          <p class="text-center mt-3 text-sm text-gray-500">图2：场景B下的效果</p>
+        </div>
+      </div>
+      <!-- 提示：也可使用视频自动播放 -->
+      <div class="mt-8 bg-white rounded-2xl shadow-md p-4 max-w-2xl mx-auto">
+        <video autoplay loop muted playsinline class="w-full rounded-xl">
+          <source src="demo.mp4" type="video/mp4">
+          你的浏览器不支持视频标签。
+        </video>
+        <p class="text-center mt-3 text-sm text-gray-500">完整流程演示（自动循环播放）</p>
+      </div>
+    </section>
+
+    <!-- 排行榜 -->
+    <section id="leaderboard" class="mb-16">
+      <h2 class="text-3xl font-bold text-center mb-10">🏆 排行榜</h2>
+      <div class="overflow-x-auto bg-white rounded-2xl shadow-md">
+        <table class="w-full text-sm text-left">
+          <thead class="gradient-bg text-white">
+            <tr>
+              <th class="px-6 py-4">排名</th>
+              <th class="px-6 py-4">模型</th>
+              <th class="px-6 py-4">准确率</th>
+              <th class="px-6 py-4">提交时间</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 font-bold">🥇 1</td>
+              <td class="px-6 py-4">Model-A</td>
+              <td class="px-6 py-4 text-green-600 font-semibold">92.5%</td>
+              <td class="px-6 py-4">2026-05-10</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 font-bold">🥈 2</td>
+              <td class="px-6 py-4">Model-B</td>
+              <td class="px-6 py-4 text-green-600 font-semibold">91.2%</td>
+              <td class="px-6 py-4">2026-05-08</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 font-bold">🥉 3</td>
+              <td class="px-6 py-4">Baseline</td>
+              <td class="px-6 py-4">88.7%</td>
+              <td class="px-6 py-4">2026-05-01</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="gradient-bg text-white text-center py-8 text-sm">
+    <p>© 2026 MyDataset. 由 xx 实验室维护.</p>
+  </footer>
+</body>
+</html>
