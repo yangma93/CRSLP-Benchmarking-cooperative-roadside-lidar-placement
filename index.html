@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRSLP Dataset - 数据集宣传页</title>
-  <!-- 使用 Tailwind CSS CDN，直接获得好看的样式 -->
+  <title>CRSLP Dataset - 数据集</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* 可稍作自定义 */
     .gradient-bg {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
+    /* 可额外调整悬停放大效果，Tailwind 已处理，这里备用 */
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -20,9 +20,8 @@
     <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-2xl font-bold">📊 CRSLP Dataset</h1>
       <div class="space-x-4 text-sm">
-        <a href="#description" class="hover:underline">描述</a>
-        <a href="#demo" class="hover:underline">动图展示</a>
-        <a href="#leaderboard" class="hover:underline">排行榜</a>
+        <a href="#description" class="hover:underline">描述 Description</a>
+        <a href="#demo" class="hover:underline">主要特点 Main Features</a>
       </div>
     </div>
   </nav>
@@ -34,91 +33,100 @@
     <section id="description" class="mb-16 text-center">
       <h2 class="text-4xl font-extrabold mb-4 gradient-bg bg-clip-text text-transparent">数据集简介</h2>
       <p class="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-        这里是你的数据集详细描述。MyDataset 是第一个针对 XX 任务的大规模、高质量数据集，
-        包含 100 万条样本，覆盖 50 种场景，旨在推动 XX 领域的研究。
+        CRSLP Dataset 是第一个面向路侧LiDAR优化布设方法测试大规模数据集，
+        包含 13个地点，超100个交通场景，超过900组布设方案及对应的IoU序列数据，旨在推动路侧协同感知设备优化布设领域的相关研究。
+        <br>
+        CRSLP Dataset is the first dataset for benchmarking cooperative roadside Lidar (CRSL) placement, which covers
+        13 sites, over 100 traffic scenarios, and more than 900 CRSL placement plans (with corresponding long IoU sequence).
+        CRSLP aims to help researchers in the domain test and improve the placement optimization approach.
       </p>
-      <!-- 下载/论文链接 -->
-      <div class="mt-8 flex justify-center gap-4">
+      <!-- 下载/论文/PDF文档链接 -->
+      <div class="mt-8 flex justify-center gap-4 flex-wrap">
         <a href="#" class="bg-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-700 transition">
           📥 下载数据集
         </a>
         <a href="#" class="bg-white border border-purple-600 text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition">
           📄 论文链接
         </a>
+        <a href="viewer.html" target="_blank" class="bg-white border border-purple-600 text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition">
+          📖 查看PDF文档
+        </a>
       </div>
     </section>
 
-    <!-- 动图展示区 -->
+    <!-- 主要特点：3行x2列网格 + 悬停放大效果 -->
     <section id="demo" class="mb-16">
-      <h2 class="text-3xl font-bold text-center mb-10">🚀 动图演示</h2>
+      <h2 class="text-3xl font-bold text-center mb-10">主要特点</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- 动图 1（替换成你自己的 GIF 或 MP4） -->
-        <div class="bg-white rounded-2xl shadow-md p-4">
-          <img src="https://placehold.co/600x400/EEE/999?text=Demo+GIF+1" 
-               alt="效果展示1" 
-               class="rounded-xl w-full object-cover">
-          <p class="text-center mt-3 text-sm text-gray-500">图1：场景A下的效果</p>
+        
+        <!-- 卡片1 -->
+        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+          <div class="aspect-video rounded-xl overflow-hidden">
+            <img src="sites.png" alt="多场景虚实融合仿真" class="w-full h-full object-cover">
+          </div>
+          <p class="text-center mt-3 text-sm text-gray-500">多地点实景点云数据</p>
         </div>
-        <!-- 动图 2 -->
-        <div class="bg-white rounded-2xl shadow-md p-4">
-          <img src="https://placehold.co/600x400/EEE/999?text=Demo+GIF+2" 
-               alt="效果展示2" 
-               class="rounded-xl w-full object-cover">
-          <p class="text-center mt-3 text-sm text-gray-500">图2：场景B下的效果</p>
+        
+        <!-- 卡片2 -->
+        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+          <div class="aspect-video rounded-xl overflow-hidden">
+            <img src="IoU%20boxplots.png" alt="多配置方案IoU分布情况" class="w-full h-full object-cover">
+          </div>
+          <p class="text-center mt-3 text-sm text-gray-500">多配置方案IoU分布情况</p>
         </div>
-      </div>
-      <!-- 提示：也可使用视频自动播放 -->
-      <div class="mt-8 bg-white rounded-2xl shadow-md p-4 max-w-2xl mx-auto">
-        <video autoplay loop muted playsinline class="w-full rounded-xl">
-          <source src="demo.mp4" type="video/mp4">
-          你的浏览器不支持视频标签。
-        </video>
-        <p class="text-center mt-3 text-sm text-gray-500">完整流程演示（自动循环播放）</p>
+
+        <!-- 卡片3 -->
+        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+          <div class="aspect-video rounded-xl overflow-hidden">
+            <video autoplay loop muted playsinline class="w-full h-full object-cover">
+              <source src="CRSLP-workflow-1.mp4" type="video/mp4">
+              您的浏览器不支持视频播放。
+            </video>
+          </div>
+          <p class="text-center mt-3 text-sm text-gray-500">CRSLP 工作流</p>
+        </div>
+        
+        <!-- 卡片4 -->
+        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+          <div class="aspect-video rounded-xl overflow-hidden">
+            <video autoplay loop muted playsinline class="w-full h-full object-cover">
+              <source src="Lidar%20sim%20group.mp4" type="video/mp4">
+              您的浏览器不支持视频播放。
+            </video>
+          </div>
+          <p class="text-center mt-3 text-sm text-gray-500">多场景仿真</p>
+        </div>
+
+        <!-- 卡片5 -->
+        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+          <div class="aspect-video rounded-xl overflow-hidden">
+            <img src="combined.png" alt="mIoU-替代指标相关性分析" class="w-full h-full object-cover">
+          </div>
+          <p class="text-center mt-3 text-sm text-gray-500">mIoU-替代指标相关性分析</p>
+        </div>
+        
+        <!-- 卡片6 -->
+        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+          <div class="aspect-video rounded-xl overflow-hidden">
+            <img src="SM%20benchmark.png" alt="多组替代指标对比" class="w-full h-full object-cover">
+          </div>
+          <p class="text-center mt-3 text-sm text-gray-500">多组替代指标对比</p>
+        </div>
       </div>
     </section>
 
-    <!-- 排行榜 -->
+    <!-- 排行榜部分已注释掉，保持不变 -->
+    <!--
     <section id="leaderboard" class="mb-16">
-      <h2 class="text-3xl font-bold text-center mb-10">🏆 排行榜</h2>
-      <div class="overflow-x-auto bg-white rounded-2xl shadow-md">
-        <table class="w-full text-sm text-left">
-          <thead class="gradient-bg text-white">
-            <tr>
-              <th class="px-6 py-4">排名</th>
-              <th class="px-6 py-4">模型</th>
-              <th class="px-6 py-4">准确率</th>
-              <th class="px-6 py-4">提交时间</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 font-bold">🥇 1</td>
-              <td class="px-6 py-4">Model-A</td>
-              <td class="px-6 py-4 text-green-600 font-semibold">92.5%</td>
-              <td class="px-6 py-4">2026-05-10</td>
-            </tr>
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 font-bold">🥈 2</td>
-              <td class="px-6 py-4">Model-B</td>
-              <td class="px-6 py-4 text-green-600 font-semibold">91.2%</td>
-              <td class="px-6 py-4">2026-05-08</td>
-            </tr>
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 font-bold">🥉 3</td>
-              <td class="px-6 py-4">Baseline</td>
-              <td class="px-6 py-4">88.7%</td>
-              <td class="px-6 py-4">2026-05-01</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      ...
     </section>
+    -->
 
   </main>
 
   <!-- 页脚 -->
   <footer class="gradient-bg text-white text-center py-8 text-sm">
-    <p>© 2026 MyDataset. 由 xx 实验室维护.</p>
+    <p>© 2026 CRSLP Dataset. 由 合肥工业大学马羊副教授团队 维护.</p>
   </footer>
 </body>
 </html>
