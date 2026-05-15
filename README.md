@@ -173,6 +173,4 @@ The CRSLP dataset is released under the [Creative Commons Attribution 4.0 Intern
 For questions or issues, please open a GitHub issue in this repository.
 ```
 
----
 
-You can directly paste this Markdown content into your `README.md`. It covers the hierarchical folder structure, detailed file formats, decoding instructions, and a summary of the aggregated benchmark table. The document is self‑contained and will help users understand and use your dataset effectively. If you need any adjustments (e.g., adding download links, adjusting columns, or more detailed decoding pseudocode), let me know.
