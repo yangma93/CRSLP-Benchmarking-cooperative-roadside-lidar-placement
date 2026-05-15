@@ -108,8 +108,8 @@ pointcloud_data/
 
 **Ground‑truth bounding boxes** (`bbox_XXXXXX.bin`)
 - Binary file containing a single‑precision float array.
-- After reading, reshape into a `(N_bboxes, 6)` matrix.
-- Each row corresponds to one bounding box: `[x_center, y_center, z_center, length, width, height]`.
+- After reading, reshape into a `(N_bboxes, 9)` matrix.
+- Each row corresponds to one bounding box: `[x_center, y_center, z_center, length, width, height, pitch, roll, yaw]`.
 
 **Python reading example** (requires NumPy):
 ```python
@@ -121,7 +121,7 @@ points = points.reshape(-1, 3)  # (N_points, 3)
 
 # Read bounding boxes
 bboxes = np.fromfile('bbox_000000.bin', dtype=np.float32)
-bboxes = bboxes.reshape(-1, 6)  # (N_bboxes, 6)
+bboxes = bboxes.reshape(-1, 9)  # (N_bboxes, 9)
 ```
 
 ---
