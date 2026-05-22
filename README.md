@@ -1,6 +1,7 @@
 # CRSLP Dataset
 
 CRSLP (Cooperative Roadside LiDAR Placement Benchmark) is a large‑scale virtual‑real‑fusion dataset for systematic evaluation of roadside LiDAR placement strategies. The dataset provides continuous IoU sequences, point cloud samples, and aggregated surrogate metric results across 13 real‑world locations × 9 traffic configurations × multiple placement schemes. This document describes the structure, format, and usage of the released data.
+The url for IoU sequence data is available at https://doi.org/10.6084/m9.figshare.32358363 
 
 ## 1. Dataset Components
 
