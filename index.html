@@ -10,7 +10,6 @@
     .gradient-bg {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    /* 可额外调整悬停放大效果，Tailwind 已处理，这里备用 */
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -124,9 +123,33 @@
 
   </main>
 
-  <!-- 页脚 -->
+  <!-- 页脚 (添加了浏览量计数器) -->
   <footer class="gradient-bg text-white text-center py-8 text-sm">
     <p>© 2026 CRSLP Dataset. Maintained by the team of Prof. Yang Ma from Hefei University of Technology 合肥工业大学 马羊副教授团队 维护.</p>
+    <!-- 新增浏览量计数 -->
+    <p class="mt-3 text-white/80 text-xs">
+      👁️ 总访问量: <span id="visitCount">加载中...</span>
+    </p>
   </footer>
+
+  <!-- 访问量计数脚本 (使用 CountAPI) -->
+  <script>
+    (function() {
+      // 使用免费的 CountAPI 服务，每次页面加载自动 +1 并返回最新数值
+      const COUNT_URL = 'https://api.countapi.xyz/hit/crslp-dataset/visits';
+
+      fetch(COUNT_URL)
+        .then(response => response.json())
+        .then(data => {
+          // data.value 为当前访问次数
+          document.getElementById('visitCount').textContent = data.value;
+        })
+        .catch(error => {
+          // 若 API 调用失败，显示占位符
+          document.getElementById('visitCount').textContent = '--';
+          console.warn('访问量计数 API 调用失败:', error);
+        });
+    })();
+  </script>
 </body>
 </html>
