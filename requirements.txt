@@ -1,0 +1,24 @@
+# LidarSIM 依赖清单
+# 安装: pip install -r requirements.txt
+# 提示: 建议在 Python >= 3.10 的虚拟环境中安装 (开发验证环境为 Python 3.14)
+
+# ---- 核心依赖 (必需) ----
+numpy>=1.24
+scipy>=1.10
+PyQt6>=6.4
+pyqtgraph>=0.13
+matplotlib>=3.7
+open3d>=0.17
+
+# ---- 可选依赖 ----
+# 读取 .h5 环境点云 (缺省时无需安装)
+h5py>=3.8
+
+# GPU 加速 (强烈建议). 按本机 CUDA 版本二选一, 先执行 nvidia-smi 确认版本:
+#   CUDA 12.x:  cupy-cuda12x>=12.0
+#   CUDA 11.x:  cupy-cuda11x>=11.0
+# 未安装时程序自动回退 CPU 模式 (速度较慢).
+# cupy-cuda12x>=12.0
+
+# ---- 仅打包时需要 ----
+# pyinstaller>=5.13
