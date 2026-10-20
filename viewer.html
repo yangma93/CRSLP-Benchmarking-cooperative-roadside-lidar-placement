@@ -3,49 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRSLP 数据集文档</title>
+  <title>CRSLP Dataset — 详细文档 / Full PDF</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      background: #f3f4f6;
-    }
-    .container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-    .toolbar {
-      padding: 12px 20px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    .toolbar a {
-      color: white;
-      text-decoration: underline;
-      font-size: 0.9rem;
-    }
-    embed {
-      flex: 1;
-      width: 100%;
-      border: none;
-    }
+    html { font-size: 18px; }
+    body, html { height: 100%; margin: 0; padding: 0; background: #f8fafc;
+                 font-family: Arial, "Microsoft YaHei", sans-serif; }
+    .gradient-brand { background: #1e3a8a; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="toolbar">
-      <span>📄 CRSLP 数据集详细文档</span>
-      <a href="index.html" target="_self">← 返回主页</a>
+<body class="text-slate-800">
+  <div class="w-full h-full flex flex-col">
+    <div class="gradient-brand text-white px-4 md:px-8 py-4 flex justify-between items-center flex-wrap gap-2">
+      <span class="font-bold tracking-wide">CRSLP Dataset — 详细文档 / Full PDF</span>
+      <div class="flex gap-4 text-sm flex-wrap">
+        <a href="index.html" class="underline hover:text-blue-100">← CRSLP Dataset</a>
+        <a href="lidarsim.html" class="underline hover:text-blue-100">LidarSIM Tool</a>
+      </div>
     </div>
-    <embed src="CRSLP.pdf" type="application/pdf">
+    <embed src="CRSLP.pdf" type="application/pdf" class="flex-1 w-full border-0">
   </div>
 </body>
 </html>

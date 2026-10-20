@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LidarSIM — Multi-LiDAR Simulation &amp; Evaluation Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        brand: { 50:"#eff6ff",100:"#dbeafe",200:"#bfdbfe",300:"#93c5fd",
+                 400:"#60a5fa",500:"#3b82f6",600:"#2563eb",700:"#1d4ed8",
+                 800:"#1e40af",900:"#1e3a8a" },
+        accent: "#1d4ed8",
+      }}}
+    };
+  </script>
+  <style>
+    html { font-size: 18px; }
+    body { font-family: Arial, "Microsoft YaHei", "PingFang SC",
+           "Hiragino Sans GB", sans-serif; }
+    .gradient-brand { background: #1e3a8a; }
+    .gradient-hero  { background: linear-gradient(160deg,#0f172a 0%,#1e3a8a 55%,#1d4ed8 100%); }
+    .gradient-text  { color: #1e3a8a; }
+    /* i18n */
+    .en { display: none; }
+    .cn { display: inline; }
+    body.lang-en .en { display: inline; }
+    body.lang-en .cn { display: none; }
+    body.lang-en .en-block { display: block; }
+    body.lang-en .cn-block { display: none; }
+    body.lang-cn .en-block { display: none; }
+    body.lang-cn .cn-block { display: block; }
+    /* 卡片悬浮 */
+    .feature-card { transition: transform .3s ease, box-shadow .3s ease; cursor: zoom-in; }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,.16); }
+    /* 悬浮浮窗 */
+    #zoom-overlay {
+      position: fixed; inset: 0; background: rgba(10,20,40,.72);
+      backdrop-filter: blur(4px); z-index: 9999; display: none;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    #zoom-overlay.active { display: flex; }
+    #zoom-content {
+      max-width: 92vw; max-height: 88vh; border-radius: 12px; overflow: hidden;
+      background: #fff; box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    }
+    #zoom-content img, #zoom-content video { max-width: 92vw; max-height: 88vh; display: block; }
+    /* Hero 特性标签 */
+    .chip { display:inline-block; padding:4px 12px; border-radius:999px;
+            background:#f1f5f9; color:#1e3a8a; font-size:.78rem; font-weight:600;
+            border:1px solid #cbd5e1; }
+    /* 区域标题装饰线 */
+    .section-title { position: relative; padding-left: 18px; }
+    .section-title::before {
+      content: ""; position: absolute; left: 0; top: .3em; bottom: .3em;
+      width: 4px; border-radius: 2px;
+      background: #1e3a8a;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- 导航栏 -->
+  <nav class="gradient-brand text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-2">
+      <h1 class="text-xl md:text-2xl font-bold tracking-wide flex items-center gap-2">
+        <span class="cn">LidarSIM 工具</span>
+        <span class="en">LidarSIM Tool</span>
+      </h1>
+      <div class="flex items-center gap-4 text-sm">
+        <a href="#overview" class="hover:text-blue-100 transition cn">工具概览</a>
+        <a href="#overview" class="hover:text-blue-100 transition en">Overview</a>
+        <a href="#modules" class="hover:text-blue-100 transition cn">功能模块</a>
+        <a href="#modules" class="hover:text-blue-100 transition en">Modules</a>
+        <a href="#export" class="hover:text-blue-100 transition cn">标注导出</a>
+        <a href="#export" class="hover:text-blue-100 transition en">Export</a>
+        <a href="index.html" class="hover:text-blue-100 transition">
+          <span class="cn">← 返回 CRSLP</span>
+          <span class="en">← CRSLP Dataset</span>
+        </a>
+        <button id="lang-toggle"
+                class="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 border border-white/30 transition text-xs font-semibold">
+          <span class="cn">EN</span>
+          <span class="en">中</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主内容 -->
+  <main class="max-w-6xl mx-auto px-4 py-10">
+
+    <!-- ========== 第一部分: 工具概览 ========== -->
+    <section id="overview" class="mb-20">
+      <div class="grid md:grid-cols-2 gap-10 items-center">
+        <!-- 左: 视频 -->
+        <div class="rounded-2xl overflow-hidden shadow-xl bg-white border border-slate-200">
+          <video autoplay loop muted playsinline controls class="w-full aspect-video object-cover">
+            <source src="LidarSIM%20demo.mp4" type="video/mp4">
+          </video>
+        </div>
+        <!-- 右: 介绍 -->
+        <div>
+          <h2 class="text-3xl md:text-4xl font-extrabold mb-3 gradient-text cn-block">
+            LidarSIM 多 LiDAR 感知仿真与评价平台
+          </h2>
+          <h2 class="text-3xl md:text-4xl font-extrabold mb-3 gradient-text en-block">
+            LidarSIM — Multi-LiDAR Simulation &amp; Evaluation
+          </h2>
+
+          <p class="text-slate-600 leading-relaxed cn-block">
+            LidarSIM 面向动态交通场景，基于 GPU 并行 ray-casting 仿真多路
+            <strong>路侧 / 车载 LiDAR</strong> 点云，提供物理真实感的扫描时序运动伪影
+            （rolling shutter）、强度衰减（反射率 × 入射角 × 大气消光）、
+            雨/雪天气杂波、漏检模型等功能，内置完整的协同感知评估链路。
+          </p>
+          <p class="text-slate-600 leading-relaxed en-block">
+            LidarSIM targets dynamic traffic scenarios. It simulates multi-roadside /
+            on-board LiDAR point clouds via GPU-parallel ray-casting with
+            physically accurate scanning-order motion artefacts (rolling shutter),
+            intensity attenuation (reflectance × incidence × atmospheric loss),
+            rain/snow clutter and dropout — plus a built-in cooperative-perception
+            evaluation pipeline.
+          </p>
+
+          <h3 class="mt-6 mb-2 font-bold text-slate-700 cn">输入</h3>
+          <h3 class="mt-6 mb-2 font-bold text-slate-700 en">Input</h3>
+          <ul class="text-sm text-slate-600 space-y-1 cn-block">
+            <li>• <strong>轨迹文件</strong>（Vissim / SUMO 格式）</li>
+            <li>• <strong>道路环境点云</strong>（PLY / H5 含语义）</li>
+            <li>• <strong>车辆三维模型</strong>（STL / PLY / OBJ）</li>
+          </ul>
+          <ul class="text-sm text-slate-600 space-y-1 en-block">
+            <li>• <strong>Vehicle trajectories</strong> (Vissim / SUMO formats)</li>
+            <li>• <strong>Environment point cloud</strong> (PLY / H5 with semantics)</li>
+            <li>• <strong>Vehicle 3D mesh library</strong> (STL / PLY / OBJ)</li>
+          </ul>
+
+          <h3 class="mt-6 mb-2 font-bold text-slate-700 cn">核心能力</h3>
+          <h3 class="mt-6 mb-2 font-bold text-slate-700 en">Capabilities</h3>
+          <div class="flex flex-wrap gap-2 cn-block">
+            <span class="chip">GPU 并行 ray-casting</span>
+            <span class="chip">5 种 LiDAR 预设</span>
+            <span class="chip">物理强度模型</span>
+            <span class="chip">雨/雪天气</span>
+            <span class="chip">运动伪影</span>
+            <span class="chip">L-shape 评估</span>
+            <span class="chip">概率占用网格</span>
+            <span class="chip">OpenCOOD 导出</span>
+          </div>
+          <div class="flex flex-wrap gap-2 en-block">
+            <span class="chip">GPU ray-casting</span>
+            <span class="chip">5 LiDAR presets</span>
+            <span class="chip">Physical intensity</span>
+            <span class="chip">Rain / snow</span>
+            <span class="chip">Motion artefacts</span>
+            <span class="chip">L-shape evaluation</span>
+            <span class="chip">Probabilistic occupancy grid</span>
+            <span class="chip">OpenCOOD export</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 第二部分: 功能模块 ========== -->
+    <section id="modules" class="mb-20">
+      <h2 class="section-title text-2xl md:text-3xl font-bold text-slate-800 mb-8 cn-block">
+        功能模块
+      </h2>
+      <h2 class="section-title text-2xl md:text-3xl font-bold text-slate-800 mb-8 en-block">
+        Functional Modules
+      </h2>
+
+      <!-- --- 2.1 LiDAR 仿真 --- -->
+      <div class="mb-14">
+        <h3 class="text-xl font-bold text-blue-700 mb-1 cn">① LiDAR 仿真</h3>
+        <h3 class="text-xl font-bold text-blue-700 mb-1 en">① LiDAR Simulation</h3>
+        <p class="text-sm text-slate-500 mb-6 cn">多类型 LiDAR 预设 · 雨雪天气 · 车路协同 · Ego 视角</p>
+        <p class="text-sm text-slate-500 mb-6 en">Multi-type presets · weather · V2X · ego view</p>
+
+        <!-- 前两行为 2 列 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Row 1 Col 1: 多类型路侧 Lidar -->
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="video" data-zoom-src="multi-lidar%20sim.mp4">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="multi-lidar%20sim.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">多类型路侧 LiDAR 仿真</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Multi-type roadside LiDAR</p>
+          </div>
+          <!-- Row 1 Col 2: 雨雪天气 -->
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="video" data-zoom-src="weather%20sim.mp4">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="weather%20sim.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">雨雪天气仿真</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Rain / snow weather simulation</p>
+          </div>
+
+          <!-- Row 2 Col 1: 车路协同 -->
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="video" data-zoom-src="CVIP%20sim.mp4">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="CVIP%20sim.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">车路协同感知 (V2X)</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Vehicle–road cooperative perception (V2X)</p>
+          </div>
+          <!-- Row 2 Col 2: 单车 Ego 视角 -->
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="gif" data-zoom-src="Ego%20vehicle%20sim%20demo.gif">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
+              <img src="Ego%20vehicle%20sim%20demo.gif" alt="Ego vehicle sim" class="w-full h-full object-cover">
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">单车 Ego 视角仿真</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Ego-vehicle simulation</p>
+          </div>
+        </div>
+
+        <!-- 第三行为 1 列 -->
+        <div class="grid grid-cols-1 gap-6 mt-6">
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="video" data-zoom-src="placement%20sim.mp4">
+            <div class="aspect-[2/1] rounded-xl overflow-hidden bg-slate-100">
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="placement%20sim.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">多 LiDAR 差异化布设展示</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Multi-LiDAR placement comparison</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- --- 2.2 感知性能评价 (1x2) --- -->
+      <div class="mb-14">
+        <h3 class="text-xl font-bold text-blue-700 mb-1 cn">② 感知性能评价</h3>
+        <h3 class="text-xl font-bold text-blue-700 mb-1 en">② Perception Evaluation</h3>
+        <p class="text-sm text-slate-500 mb-6 cn">L-shape 检测 · IoU / Dev / Comp · 分类型评估 · CSV 导出</p>
+        <p class="text-sm text-slate-500 mb-6 en">L-shape · IoU / Dev / Comp · per-vType breakdown · CSV</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="video" data-zoom-src="CoP%20metric%20demo.mp4">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="CoP%20metric%20demo.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">评价结果输出演示</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Evaluation workflow</p>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="image" data-zoom-src="iou_dev_curve.png">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+              <img src="iou_dev_curve.png" alt="IoU/Dev sequence" class="w-full h-full object-cover">
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">IoU / Dev / Comp 数据展示（CSV）</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">IoU / Dev / Comp time series (CSV)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- --- 2.3 POG 构建 (1x2) --- -->
+      <div class="mb-14">
+        <h3 class="text-xl font-bold text-blue-700 mb-1 cn">③ 概率占用网格 (POG)</h3>
+        <h3 class="text-xl font-bold text-blue-700 mb-1 en">③ Probabilistic Occupancy Grid</h3>
+        <p class="text-sm text-slate-500 mb-6 cn">逐帧占用平均 · 观测掩码 · BEV / 3D 可视化 · NPZ / MAT 导出</p>
+        <p class="text-sm text-slate-500 mb-6 en">Per-frame occupancy · observation mask · BEV/3D · NPZ/MAT export</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="video" data-zoom-src="pog%20creation.mp4">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                <source src="pog%20creation.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">POG 动态构建过程</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">POG construction over time</p>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
+               data-zoom-type="image" data-zoom-src="pog_topview.png">
+            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+              <img src="pog_topview.png" alt="POG result" class="w-full h-full object-cover">
+            </div>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">POG 结果可视化</p>
+            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">POG visualization (BEV)</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 第三部分: 标注数据导出 ========== -->
+    <section id="export" class="mb-10">
+      <div class="grid md:grid-cols-2 gap-10 items-center bg-white rounded-3xl shadow-sm p-6 md:p-10 border border-slate-200">
+        <!-- 左: 视频 -->
+        <div class="rounded-2xl overflow-hidden shadow-md bg-blue-50">
+          <video autoplay loop muted playsinline controls class="w-full aspect-video object-cover">
+            <source src="OpenCOOD%20export.mp4" type="video/mp4">
+          </video>
+        </div>
+        <!-- 右: 介绍 -->
+        <div>
+          <h2 class="text-2xl md:text-3xl font-extrabold mb-3 gradient-text cn-block">
+            标注数据导出 (OpenCOOD)
+          </h2>
+          <h2 class="text-2xl md:text-3xl font-extrabold mb-3 gradient-text en-block">
+            Annotation Export for OpenCOOD
+          </h2>
+          <p class="text-slate-600 leading-relaxed cn-block">
+            为支持协同感知模型训练，指定起止帧后，LidarSIM 支持导出
+            <strong>OpenCOOD 框架</strong>（OPV2V 格式）下的标注数据：
+            每帧生成协同感知点云与 GT BBox，自动按场景编号归档，
+            可直接用于多车辆协同感知模型训练。
+          </p>
+          <p class="text-slate-600 leading-relaxed en-block">
+            To support cooperative-perception training, LidarSIM exports
+            <strong>OpenCOOD-format</strong> (OPV2V) annotations given a frame
+            range. Each frame produces cooperative point clouds and GT BBoxes,
+            organised per scene and ready to plug into multi-vehicle
+            cooperative-perception pipelines.
+          </p>
+          <div class="mt-5 flex gap-3 flex-wrap">
+            <span class="chip">scene_00x / 00x / xxxxx.pcd</span>
+            <span class="chip">OpenCOOD yaml</span>
+            <span class="chip">GT BBox 标注</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="gradient-brand text-white text-center py-8 text-sm mt-6">
+    <p>© 2026 CRSLP Dataset &amp; LidarSIM.
+      <span class="cn">合肥工业大学 马羊副教授团队 维护</span>
+      <span class="en">Maintained by Prof. Yang Ma's Team, Hefei University of Technology</span>
+    </p>
+    <p class="mt-3 flex items-center justify-center gap-3 flex-wrap">
+      <a href="https://github.com/yangma93/CRSLP-Benchmarking-cooperative-roadside-lidar-placement"
+         class="underline hover:text-white/90" target="_blank" rel="noopener">
+        GitHub
+      </a>
+      <span class="mx-1">·</span>
+      <a href="index.html" class="underline hover:text-white/90">
+        <span class="cn">← CRSLP 数据集主页</span>
+        <span class="en">← CRSLP Dataset</span>
+      </a>
+    </p>
+  </footer>
+
+  <!-- 悬浮预览浮窗 -->
+  <div id="zoom-overlay" role="dialog" aria-label="preview" onclick="closeZoom(event)">
+    <div id="zoom-content"></div>
+  </div>
+
+  <script>
+    /* ============== 语言切换 ============== */
+    const STORAGE_KEY = "crslp_lang";
+    const savedLang = (localStorage.getItem(STORAGE_KEY) || "cn").toLowerCase();
+    applyLang(savedLang);
+    document.getElementById("lang-toggle").addEventListener("click", () => {
+      const cur = document.body.classList.contains("lang-en") ? "en" : "cn";
+      const next = cur === "en" ? "cn" : "en";
+      localStorage.setItem(STORAGE_KEY, next);
+      applyLang(next);
+    });
+    function applyLang(lang) {
+      document.body.classList.toggle("lang-en", lang === "en");
+      document.body.classList.toggle("lang-cn", lang === "cn");
+      document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+    }
+
+    /* ============== 点击放大预览 (单击卡片打开弹层) ============== */
+    const overlay = document.getElementById("zoom-overlay");
+    const content = document.getElementById("zoom-content");
+    document.querySelectorAll(".feature-card").forEach(card => {
+      card.addEventListener("click", () => openZoom(card));
+    });
+    function openZoom(card) {
+      const type = card.dataset.zoomType;
+      const src  = card.dataset.zoomSrc;
+      content.innerHTML = "";
+      if (type === "video") {
+        const v = document.createElement("video");
+        v.src = src; v.autoplay = true; v.loop = true; v.muted = true;
+        v.playsInline = true; v.controls = true;
+        content.appendChild(v);
+      } else {
+        const img = document.createElement("img");
+        img.src = src; img.alt = "preview";
+        content.appendChild(img);
+      }
+      overlay.classList.add("active");
+    }
+    function closeZoom(e) {
+      if (e && e.target !== overlay && e.target.id !== "zoom-overlay") return;
+      const v = content.querySelector("video");
+      if (v) { v.pause(); v.remove(); }
+      overlay.classList.remove("active");
+      content.innerHTML = "";
+    }
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeZoom(); });
+  </script>
+</body>
+</html>

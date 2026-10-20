@@ -3,153 +3,354 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRSLP Dataset - 数据集</title>
+  <title>CRSLP Dataset — Benchmark for Cooperative Roadside LiDAR Placement</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  "#eff6ff",
+              100: "#dbeafe",
+              200: "#bfdbfe",
+              300: "#93c5fd",
+              400: "#60a5fa",
+              500: "#3b82f6",
+              600: "#2563eb",
+              700: "#1d4ed8",
+              800: "#1e40af",
+              900: "#1e3a8a",
+            },
+            accent: "#1d4ed8",
+          },
+        },
+      },
+    };
+  </script>
   <style>
-    .gradient-bg {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    html { font-size: 18px; }
+    body { font-family: Arial, "Microsoft YaHei", "PingFang SC",
+           "Hiragino Sans GB", sans-serif; }
+    .gradient-brand {
+      background: #1e3a8a;
     }
+    .gradient-text {
+      color: #1e3a8a;
+    }
+    /* i18n: 默认中文可见, 英文隐藏 */
+    .en { display: none; }
+    .cn { display: inline; }
+    body.lang-en .en { display: inline; }
+    body.lang-en .cn { display: none; }
+    body.lang-en .en-block { display: block; }
+    body.lang-en .cn-block { display: none; }
+    body.lang-cn .en-block { display: none; }
+    body.lang-cn .cn-block { display: block; }
+    /* 卡片悬浮 */
+    .feature-card { transition: transform .3s ease, box-shadow .3s ease; cursor: zoom-in; }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15, 23, 42, .16); }
+    /* 悬浮预览浮窗 */
+    #zoom-overlay {
+      position: fixed; inset: 0; background: rgba(10, 20, 40, .7);
+      backdrop-filter: blur(4px); z-index: 9999; display: none;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    #zoom-overlay.active { display: flex; }
+    #zoom-content {
+      max-width: 92vw; max-height: 88vh; border-radius: 12px; overflow: hidden;
+      background: #fff; box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    }
+    #zoom-content img, #zoom-content video {
+      max-width: 92vw; max-height: 88vh; display: block;
+    }
+    /* 计数徽标 */
+    .badge-counter {
+      background: #1d4ed8;
+      color: white; padding: 4px 10px; border-radius: 999px;
+      font-size: .78rem; font-weight: 600; box-shadow: 0 2px 8px rgba(30,58,138,.35);
+    }
+    /* 按钮 */
+    .btn-primary {
+      background: #1d4ed8;
+      color: white; padding: 10px 22px; border-radius: 999px; font-weight: 600;
+      transition: all .25s ease; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(30,58,138,.4); }
+    .btn-outline {
+      border: 2px solid #1d4ed8; color: #1d4ed8; padding: 10px 22px;
+      border-radius: 999px; font-weight: 600; transition: all .25s ease;
+      display: inline-flex; align-items: center; gap: 6px; background: transparent;
+    }
+    .btn-outline:hover { background: #f1f5f9; transform: translateY(-2px); }
+    /* 计数器重试提示 */
+    .counter-fallback { font-size: .72rem; color: #94a3b8; margin-left: 4px; }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-  
+<body class="bg-slate-50 text-slate-800">
+
   <!-- 导航栏 -->
-  <nav class="gradient-bg text-white shadow-lg">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold">📊 CRSLP Dataset</h1>
-      <div class="space-x-4 text-sm">
-        <a href="#description" class="hover:underline">描述 Description</a>
-        <a href="#demo" class="hover:underline">主要特点 Main Features</a>
+  <nav class="gradient-brand text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-2">
+      <h1 class="text-xl md:text-2xl font-bold tracking-wide flex items-center gap-2">
+        <span class="cn">CRSLP 数据集</span>
+        <span class="en">CRSLP Dataset</span>
+      </h1>
+      <div class="flex items-center gap-4 text-sm">
+        <a href="#description" class="hover:text-blue-100 transition cn">数据集简介</a>
+        <a href="#description" class="hover:text-blue-100 transition en">Description</a>
+        <a href="#demo" class="hover:text-blue-100 transition cn">主要特点</a>
+        <a href="#demo" class="hover:text-blue-100 transition en">Features</a>
+        <!-- 语言切换 -->
+        <button id="lang-toggle"
+                class="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 border border-white/30 transition text-xs font-semibold">
+          <span class="cn">EN</span>
+          <span class="en">中</span>
+        </button>
       </div>
     </div>
   </nav>
 
   <!-- 主内容 -->
-  <main class="max-w-6xl mx-auto px-4 py-12">
-    
+  <main class="max-w-6xl mx-auto px-4 py-10">
+
     <!-- 数据集描述 -->
     <section id="description" class="mb-16 text-center">
-      <h2 class="text-4xl font-extrabold mb-4 gradient-bg bg-clip-text text-transparent">数据集简介 Introduction</h2>
-      <p class="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-        CRSLP Dataset 是第一个面向路侧LiDAR优化布设方法测试的大规模虚实融合数据集，
-        包含13个地点，超100个交通场景，超过900组布设方案及对应的IoU序列数据，并提供部分场景的连续点云数据序列与GT-BBox，旨在推动路侧协同感知设备优化布设领域的相关研究。
-        <br>
-        CRSLP Dataset is the first virtual-real fusion dataset for benchmarking cooperative roadside Lidar (CRSL) placement, which covers
-        13 sites, over 100 traffic scenarios, and more than 900 CRSL placement plans (with corresponding long IoU sequence) and continuous point cloud data sequences and GT-BBox.
-        CRSLP aims to help researchers in the domain test and improve their placement optimization approaches.
+      <h2 class="text-3xl md:text-4xl font-extrabold mb-5 gradient-text cn-block">
+        数据集简介
+      </h2>
+      <h2 class="text-3xl md:text-4xl font-extrabold mb-5 gradient-text en-block">
+        Introduction
+      </h2>
+
+      <!-- 中文描述 -->
+      <p class="text-base md:text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed cn-block">
+        <strong>CRSLP Dataset</strong> 是第一个面向路侧协同 LiDAR 优化布设方法测试的大规模虚实融合数据集，
+        包含 <strong>13 个地点</strong>，超 <strong>100 个交通场景</strong>，
+        超过 <strong>900 组布设方案</strong> 及对应的 IoU 序列数据，
+        并提供部分场景的连续点云数据序列与 GT-BBox 标注，
+        旨在推动路侧协同感知设备优化布设领域的相关研究。
+        <br><br>
+        同时，我们还提供了点云可视化与生成工具
+        <strong><a href="lidarsim.html" class="text-blue-600 hover:underline">LidarSIM</a></strong> ——
+        在提供道路环境三维场景数据与轨迹数据的基础上，可开展多 LiDAR 感知仿真与评价。
       </p>
-      <!-- 下载/论文/PDF文档链接 -->
-      <div class="mt-8 flex justify-center gap-4 flex-wrap">
-        <a href="https://doi.org/10.6084/m9.figshare.32358363" class="bg-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-700 transition">
-          📥 下载数据集 Download
+      <!-- 英文描述 -->
+      <p class="text-base md:text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed en-block">
+        <strong>CRSLP Dataset</strong> is the first large-scale virtual-real fusion dataset for
+        benchmarking <strong>Cooperative Roadside LiDAR (CRSL) placement</strong> optimization.
+        It covers <strong>13 real-world sites</strong>, over
+        <strong>100 traffic scenarios</strong>, and more than
+        <strong>900 placement plans</strong> with corresponding IoU time-series.
+        Selected scenarios also provide continuous point-cloud sequences and
+        GT-BBox annotations. CRSLP aims to advance research on roadside
+        cooperative-perception deployment.
+        <br><br>
+        We also release <strong><a href="lidarsim.html" class="text-blue-600 hover:underline">LidarSIM</a></strong>,
+        a point-cloud visualization and generation tool that performs multi-LiDAR
+        simulation and evaluation given 3D environment meshes and trajectory data.
+      </p>
+
+      <!-- 下载按钮行 -->
+      <div class="mt-8 flex justify-center gap-3 md:gap-4 flex-wrap">
+        <a href="https://doi.org/10.6084/m9.figshare.32358363" class="btn-primary">
+          <span class="cn">下载数据集</span>
+          <span class="en">Download Dataset</span>
         </a>
-        <a href="https://ssrn.com/abstract=6816004" class="bg-white border border-purple-600 text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition">
-          📄 论文链接 Paper
+        <a href="https://ssrn.com/abstract=6816004" class="btn-outline">
+          <span class="cn">论文链接</span>
+          <span class="en">Paper</span>
         </a>
-        <a href="viewer.html" target="_blank" class="bg-white border border-purple-600 text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition">
-          📖 查看PDF文档 See more
+        <a href="viewer.html" target="_blank" class="btn-outline">
+          <span class="cn">PDF 文档</span>
+          <span class="en">Full PDF</span>
+        </a>
+        <a href="lidarsim.html" class="btn-primary" style="background:#1e3a8a">
+          <span class="cn">LidarSIM 工具</span>
+          <span class="en">LidarSIM Tool</span>
         </a>
       </div>
     </section>
 
-    <!-- 主要特点：3行x2列网格 + 悬停放大效果 -->
+    <!-- 主要特点 -->
     <section id="demo" class="mb-16">
-      <h2 class="text-3xl font-bold text-center mb-10">主要特点 Main Features</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        <!-- 卡片1 -->
-        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="aspect-video rounded-xl overflow-hidden">
-            <img src="sites.png" alt="多场景虚实融合仿真" class="w-full h-full object-cover">
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 gradient-text cn-block">主要特点</h2>
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 gradient-text en-block">Main Features</h2>
+      <p class="text-center text-slate-500 text-sm mb-8 cn-block">（点击查看大图 / 播放视频）</p>
+      <p class="text-center text-slate-500 text-sm mb-8 en-block">(click any card to view full media)</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- 卡片 1: 实景点云 -->
+        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl p-4 flex flex-col transition duration-300 feature-card"
+             data-zoom-type="image" data-zoom-src="sites.png">
+          <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+            <img src="sites.png" alt="Real-world point cloud sites" class="w-full h-full object-cover">
           </div>
-          <p class="text-center mt-3 text-sm text-gray-500">多地点实景点云数据 Real-world point cloud data at multi-sites </p>
-        </div>
-        
-        <!-- 卡片2 -->
-        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="aspect-video rounded-xl overflow-hidden">
-            <img src="IoU%20boxplots.png" alt="多配置方案IoU分布情况" class="w-full h-full object-cover">
-          </div>
-          <p class="text-center mt-3 text-sm text-gray-500">多配置方案IoU分布情况 IoU boxplots of different CRSL configs</p>
+          <p class="text-center mt-3 text-sm text-slate-500 cn">多地点实景点云数据</p>
+          <p class="text-center mt-3 text-sm text-slate-500 en">Real-world point-cloud data at multi-sites</p>
         </div>
 
-        <!-- 卡片3 -->
-        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="aspect-video rounded-xl overflow-hidden">
+        <!-- 卡片 2: IoU boxplots -->
+        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl p-4 flex flex-col transition duration-300 feature-card"
+             data-zoom-type="image" data-zoom-src="IoU%20boxplots.png">
+          <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+            <img src="IoU%20boxplots.png" alt="IoU boxplots" class="w-full h-full object-cover">
+          </div>
+          <p class="text-center mt-3 text-sm text-slate-500 cn">多配置方案 IoU 分布</p>
+          <p class="text-center mt-3 text-sm text-slate-500 en">IoU distribution across CRSL configs</p>
+        </div>
+
+        <!-- 卡片 3: CRSLP 工作流 -->
+        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl p-4 flex flex-col transition duration-300 feature-card"
+             data-zoom-type="video" data-zoom-src="CRSLP-workflow-1.mp4">
+          <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
             <video autoplay loop muted playsinline class="w-full h-full object-cover">
               <source src="CRSLP-workflow-1.mp4" type="video/mp4">
-              您的浏览器不支持视频播放。
             </video>
           </div>
-          <p class="text-center mt-3 text-sm text-gray-500">CRSLP 工作流 workflow</p>
+          <p class="text-center mt-3 text-sm text-slate-500 cn">CRSLP 工作流</p>
+          <p class="text-center mt-3 text-sm text-slate-500 en">CRSLP workflow</p>
         </div>
-        
-        <!-- 卡片4 -->
-        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="aspect-video rounded-xl overflow-hidden">
+
+        <!-- 卡片 4: 多场景仿真 -->
+        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl p-4 flex flex-col transition duration-300 feature-card"
+             data-zoom-type="video" data-zoom-src="Lidar%20sim%20group.mp4">
+          <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
             <video autoplay loop muted playsinline class="w-full h-full object-cover">
               <source src="Lidar%20sim%20group.mp4" type="video/mp4">
-              您的浏览器不支持视频播放。
             </video>
           </div>
-          <p class="text-center mt-3 text-sm text-gray-500">多场景仿真 Multi-scenario simulations </p>
+          <p class="text-center mt-3 text-sm text-slate-500 cn">多场景仿真</p>
+          <p class="text-center mt-3 text-sm text-slate-500 en">Multi-scenario simulation</p>
         </div>
 
-        <!-- 卡片5 -->
-        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="aspect-video rounded-xl overflow-hidden">
-            <img src="combined.png" alt="mIoU-替代指标相关性分析" class="w-full h-full object-cover">
+        <!-- 卡片 5: mIoU-替代指标 相关性 -->
+        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl p-4 flex flex-col transition duration-300 feature-card"
+             data-zoom-type="image" data-zoom-src="combined.png">
+          <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+            <img src="combined.png" alt="Correlation analysis" class="w-full h-full object-cover">
           </div>
-          <p class="text-center mt-3 text-sm text-gray-500">mIoU-替代指标相关性分析 Correlation analysis between mIoU and SMs </p>
+          <p class="text-center mt-3 text-sm text-slate-500 cn">mIoU-替代指标相关性分析</p>
+          <p class="text-center mt-3 text-sm text-slate-500 en">Correlation between mIoU and surrogate metrics</p>
         </div>
-        
-        <!-- 卡片6 -->
-        <div class="bg-white rounded-2xl shadow-md p-4 flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="aspect-video rounded-xl overflow-hidden">
-            <img src="SM%20benchmark.png" alt="多组替代指标对比" class="w-full h-full object-cover">
+
+        <!-- 卡片 6: 多组替代指标对比 -->
+        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl p-4 flex flex-col transition duration-300 feature-card"
+             data-zoom-type="image" data-zoom-src="SM%20benchmark.png">
+          <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
+            <img src="SM%20benchmark.png" alt="Surrogate metric benchmark" class="w-full h-full object-cover">
           </div>
-          <p class="text-center mt-3 text-sm text-gray-500">多组替代指标对比 Comparisons of SMs </p>
+          <p class="text-center mt-3 text-sm text-slate-500 cn">多组替代指标对比</p>
+          <p class="text-center mt-3 text-sm text-slate-500 en">Surrogate metric benchmark</p>
         </div>
+
       </div>
     </section>
-
-    <!-- 排行榜部分已注释掉，保持不变 -->
-    <!--
-    <section id="leaderboard" class="mb-16">
-      ...
-    </section>
-    -->
-
   </main>
 
-  <!-- 页脚 (添加了浏览量计数器) -->
-  <footer class="gradient-bg text-white text-center py-8 text-sm">
-    <p>© 2026 CRSLP Dataset. Maintained by the team of Prof. Yang Ma from Hefei University of Technology 合肥工业大学 马羊副教授团队 维护.</p>
-    <!-- 新增浏览量计数 -->
-    <p class="mt-3 text-white/80 text-xs">
-      👁️ 总访问量: <span id="visitCount">加载中...</span>
+  <!-- 页脚 + 计数器 -->
+  <footer class="gradient-brand text-white text-center py-8 text-sm mt-10">
+    <p>© 2026 CRSLP Dataset &amp; LidarSIM.
+      <span class="cn">合肥工业大学 马羊副教授团队 维护</span>
+      <span class="en">Maintained by Prof. Yang Ma's Team, Hefei University of Technology</span>
+    </p>
+    <p class="mt-3 text-white/80 text-xs flex items-center justify-center gap-2 flex-wrap">
+      <a href="https://github.com/yangma93/CRSLP-Benchmarking-cooperative-roadside-lidar-placement"
+         class="underline hover:text-white/90" target="_blank" rel="noopener">
+        GitHub
+      </a>
+      <span class="mx-2">·</span>
+      <span class="cn">LidarSIM 工具:</span><span class="en">LidarSIM Tool:</span>
+      <a href="lidarsim.html" class="underline hover:text-white/90">lidarsim.html</a>
+      <span class="mx-2">·</span>
+      <span class="cn">访问量:</span><span class="en">Visits:</span>
+      <span class="badge-counter" id="visit-count">…</span>
     </p>
   </footer>
 
-  <!-- 访问量计数脚本 (使用 CountAPI) -->
-  <script>
-    (function() {
-      // 使用免费的 CountAPI 服务，每次页面加载自动 +1 并返回最新数值
-      const COUNT_URL = 'https://api.countapi.xyz/hit/crslp-dataset/visits';
+  <!-- 悬浮预览浮窗 -->
+  <div id="zoom-overlay" role="dialog" aria-label="preview" onclick="closeZoom(event)">
+    <div id="zoom-content">
+      <!-- 动态替换 -->
+    </div>
+  </div>
 
-      fetch(COUNT_URL)
-        .then(response => response.json())
+  <script>
+    /* ============== 语言切换 ============== */
+    const STORAGE_KEY = "crslp_lang";
+    const savedLang = (localStorage.getItem(STORAGE_KEY) || "cn").toLowerCase();
+    applyLang(savedLang);
+    document.getElementById("lang-toggle").addEventListener("click", () => {
+      const cur = document.body.classList.contains("lang-en") ? "en" : "cn";
+      const next = cur === "en" ? "cn" : "en";
+      localStorage.setItem(STORAGE_KEY, next);
+      applyLang(next);
+    });
+    function applyLang(lang) {
+      document.body.classList.toggle("lang-en", lang === "en");
+      document.body.classList.toggle("lang-cn", lang === "cn");
+      document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+    }
+
+    /* ============== 点击放大预览 (单击卡片打开弹层) ============== */
+    const overlay = document.getElementById("zoom-overlay");
+    const content = document.getElementById("zoom-content");
+    document.querySelectorAll(".feature-card").forEach(card => {
+      card.addEventListener("click", () => openZoom(card));
+    });
+    function openZoom(card) {
+      const type = card.dataset.zoomType;
+      const src  = card.dataset.zoomSrc;
+      content.innerHTML = "";
+      if (type === "video") {
+        const v = document.createElement("video");
+        v.src = src; v.autoplay = true; v.loop = true; v.muted = true;
+        v.playsInline = true; v.controls = true;
+        content.appendChild(v);
+      } else if (type === "gif") {
+        const img = document.createElement("img");
+        img.src = src; img.alt = "preview";
+        content.appendChild(img);
+      } else {
+        const img = document.createElement("img");
+        img.src = src; img.alt = "preview";
+        content.appendChild(img);
+      }
+      overlay.classList.add("active");
+    }
+    function closeZoom(e) {
+      if (e && e.target !== overlay && e.target.id !== "zoom-overlay") return;
+      const v = content.querySelector("video");
+      if (v) { v.pause(); v.remove(); }
+      overlay.classList.remove("active");
+      content.innerHTML = "";
+    }
+    // ESC 关闭
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeZoom();
+    });
+
+    /* ============== 访问量计数 (CountAPI + 重试 + 降级) ============== */
+    const COUNT_ENDPOINT = "https://api.countapi.xyz/hit/crslp-dataset/visits";
+    function updateCount() {
+      fetch(COUNT_ENDPOINT, { cache: "no-store" })
+        .then(r => r.json())
         .then(data => {
-          // data.value 为当前访问次数
-          document.getElementById('visitCount').textContent = data.value;
+          if (data && typeof data.value === "number") {
+            document.getElementById("visit-count").textContent = data.value.toLocaleString();
+          } else { throw new Error("bad response"); }
         })
-        .catch(error => {
-          // 若 API 调用失败，显示占位符
-          document.getElementById('visitCount').textContent = '--';
-          console.warn('访问量计数 API 调用失败:', error);
+        .catch(err => {
+          console.warn("CountAPI failed:", err);
+          // 降级: 使用本地 sessionStorage 粗略计数 (仅当 API 全挂时)
+          let local = parseInt(sessionStorage.getItem("crslp_local_visits") || "0", 10);
+          local += 1;
+          sessionStorage.setItem("crslp_local_visits", local.toString());
+          document.getElementById("visit-count").textContent = "(local) " + local;
         });
-    })();
+    }
+    updateCount();
   </script>
 </body>
 </html>
