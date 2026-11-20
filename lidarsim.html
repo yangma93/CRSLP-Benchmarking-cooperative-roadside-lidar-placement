@@ -1,414 +1,1446 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LidarSIM — Multi-LiDAR Simulation &amp; Evaluation Platform</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: { extend: { colors: {
-        brand: { 50:"#eff6ff",100:"#dbeafe",200:"#bfdbfe",300:"#93c5fd",
-                 400:"#60a5fa",500:"#3b82f6",600:"#2563eb",700:"#1d4ed8",
-                 800:"#1e40af",900:"#1e3a8a" },
-        accent: "#1d4ed8",
-      }}}
-    };
-  </script>
-  <style>
-    html { font-size: 18px; }
-    body { font-family: Arial, "Microsoft YaHei", "PingFang SC",
-           "Hiragino Sans GB", sans-serif; }
-    .gradient-brand { background: #1e3a8a; }
-    .gradient-hero  { background: linear-gradient(160deg,#0f172a 0%,#1e3a8a 55%,#1d4ed8 100%); }
-    .gradient-text  { color: #1e3a8a; }
-    /* i18n */
-    .en { display: none; }
-    .cn { display: inline; }
-    body.lang-en .en { display: inline; }
-    body.lang-en .cn { display: none; }
-    body.lang-en .en-block { display: block; }
-    body.lang-en .cn-block { display: none; }
-    body.lang-cn .en-block { display: none; }
-    body.lang-cn .cn-block { display: block; }
-    /* 卡片悬浮 */
-    .feature-card { transition: transform .3s ease, box-shadow .3s ease; cursor: zoom-in; }
-    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,.16); }
-    /* 悬浮浮窗 */
-    #zoom-overlay {
-      position: fixed; inset: 0; background: rgba(10,20,40,.72);
-      backdrop-filter: blur(4px); z-index: 9999; display: none;
-      align-items: center; justify-content: center; padding: 24px;
-    }
-    #zoom-overlay.active { display: flex; }
-    #zoom-content {
-      max-width: 92vw; max-height: 88vh; border-radius: 12px; overflow: hidden;
-      background: #fff; box-shadow: 0 24px 60px rgba(0,0,0,.35);
-    }
-    #zoom-content img, #zoom-content video { max-width: 92vw; max-height: 88vh; display: block; }
-    /* Hero 特性标签 */
-    .chip { display:inline-block; padding:4px 12px; border-radius:999px;
-            background:#f1f5f9; color:#1e3a8a; font-size:.78rem; font-weight:600;
-            border:1px solid #cbd5e1; }
-    /* 区域标题装饰线 */
-    .section-title { position: relative; padding-left: 18px; }
-    .section-title::before {
-      content: ""; position: absolute; left: 0; top: .3em; bottom: .3em;
-      width: 4px; border-radius: 2px;
-      background: #1e3a8a;
-    }
-  </style>
-</head>
-<body class="bg-slate-50 text-slate-800">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LidarSIM — 车路协同 LiDAR 仿真与评价平台</title>
+<meta name="description" content="LidarSIM：以真实环境点云为背景的车路协同感知仿真平台。多雷达预设、物理强度、雨雪天气、SUMO 联合仿真、感知量化评价与 OpenCOOD 标注导出。">
+<meta property="og:title" content="LidarSIM — 车路协同 LiDAR 仿真与评价平台">
+<meta property="og:description" content="Multi-LiDAR point-cloud simulation, SUMO co-simulation and cooperative-perception evaluation on real roadside point clouds.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%239fd3ff'/%3E%3Cstop offset='1' stop-color='%23bdf2bf'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='26' fill='url(%23g)'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #000000;
+    --fg: #f5f5f7;
+    --muted: #9a9aa0;
+    --muted-2: #6e6e73;
+    --line: rgba(255, 255, 255, .085);
+    --line-strong: rgba(255, 255, 255, .14);
+    --card: #0a0a0c;
+    --card-2: #101013;
+    --grad: linear-gradient(96deg, #9fd3ff 0%, #8ee7d4 52%, #bdf2bf 100%);
+    --grad-soft: linear-gradient(96deg, rgba(159, 211, 255, .14), rgba(189, 242, 191, .14));
+    --radius: 22px;
+    --max: 1320px;
+    --ease: cubic-bezier(.16, 1, .3, 1);
+  }
 
-  <!-- 导航栏 -->
-  <nav class="gradient-brand text-white shadow-lg sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-2">
-      <h1 class="text-xl md:text-2xl font-bold tracking-wide flex items-center gap-2">
-        <span class="cn">LidarSIM 工具</span>
-        <span class="en">LidarSIM Tool</span>
-      </h1>
-      <div class="flex items-center gap-4 text-sm">
-        <a href="#overview" class="hover:text-blue-100 transition cn">工具概览</a>
-        <a href="#overview" class="hover:text-blue-100 transition en">Overview</a>
-        <a href="#modules" class="hover:text-blue-100 transition cn">功能模块</a>
-        <a href="#modules" class="hover:text-blue-100 transition en">Modules</a>
-        <a href="#export" class="hover:text-blue-100 transition cn">标注导出</a>
-        <a href="#export" class="hover:text-blue-100 transition en">Export</a>
-        <a href="index.html" class="hover:text-blue-100 transition">
-          <span class="cn">← 返回 CRSLP</span>
-          <span class="en">← CRSLP Dataset</span>
-        </a>
-        <button id="lang-toggle"
-                class="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 border border-white/30 transition text-xs font-semibold">
-          <span class="cn">EN</span>
-          <span class="en">中</span>
-        </button>
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Aptos', 'Aptos Display', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  html[lang="zh-CN"] body,
+  html[lang="zh"] body {
+    font-family: 'Aptos', 'Microsoft YaHei', 'Microsoft YaHei UI', 'PingFang SC',
+                 'Hiragino Sans GB', 'Noto Sans SC', sans-serif;
+  }
+
+  html[lang="zh-CN"] h1,
+  html[lang="zh"] h1 { line-height: 1.24; letter-spacing: -.015em; }
+
+  ::selection { background: rgba(142, 231, 212, .3); }
+
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; }
+
+  .bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 620px at 10% -8%, rgba(159, 211, 255, .14), transparent 62%),
+      radial-gradient(1000px 720px at 94% -4%, rgba(142, 231, 212, .12), transparent 64%),
+      radial-gradient(900px 700px at 50% 112%, rgba(189, 242, 191, .06), transparent 62%);
+  }
+
+  .container {
+    width: 100%;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 clamp(20px, 4vw, 56px);
+  }
+
+  /* ------------------------------------------------------------------ nav */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, .62);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav-inner {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+  }
+
+  .brand-mark {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--grad);
+    box-shadow: 0 0 18px rgba(142, 231, 212, .45);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-left: auto;
+    margin-right: 8px;
+    font-size: 13px;
+    color: #c7c7cc;
+  }
+
+  .nav-links a {
+    position: relative;
+    padding: 6px 0;
+    transition: color .25s ease;
+  }
+
+  .nav-links a:hover { color: #fff; }
+
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 100%; bottom: 0;
+    height: 1px;
+    background: var(--grad);
+    transition: right .35s var(--ease);
+  }
+
+  .nav-links a:hover::after { right: 0; }
+
+  .nav-links .back {
+    color: #9a9aa0;
+    padding-left: 18px;
+    border-left: 1px solid var(--line-strong);
+  }
+
+  .lang {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .035);
+  }
+
+  .lang button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: #a8a8ae;
+    font: inherit;
+    font-size: 11.5px;
+    letter-spacing: .04em;
+    padding: 4px 10px;
+    min-width: 38px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all .25s ease;
+  }
+
+  .lang button.active {
+    background: #f5f5f7;
+    color: #050505;
+  }
+
+  /* ----------------------------------------------------------------- hero */
+  .hero {
+    padding: clamp(106px, 13vw, 158px) 0 clamp(56px, 7vw, 92px);
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.08fr .92fr;
+    gap: clamp(30px, 4.5vw, 68px);
+    align-items: center;
+  }
+
+  .hero-figure {
+    margin: 0;
+    background: #0a0a0c;
+    border: 1px solid var(--line-strong);
+    border-radius: 26px;
+    padding: 10px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .03);
+  }
+
+  .hero-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 18px;
+    background: #000;
+  }
+
+  .hero-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 22px;
+    padding: 2px 0;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 11.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #a8a8ae;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--grad);
+    box-shadow: 0 0 12px rgba(142, 231, 212, .65);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 3.4vw, 46px);
+    line-height: 1.12;
+    letter-spacing: -.032em;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  h1 .grad {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lede {
+    margin: 0;
+    font-size: clamp(14.5px, 1.1vw, 16.5px);
+    line-height: 1.72;
+    color: #e8e8ed;
+    max-width: 52ch;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip {
+    font-size: 12px;
+    color: #c9c9cf;
+    padding: 6px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgba(255, 255, 255, .028);
+    white-space: nowrap;
+  }
+
+  /* -------------------------------------------------------------- section */
+  .section {
+    padding: clamp(60px, 7.5vw, 104px) 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .section-head {
+    max-width: 940px;
+    margin-bottom: clamp(30px, 3.6vw, 46px);
+  }
+
+  .section-head.center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  .kicker {
+    display: inline-block;
+    margin-bottom: 14px;
+    font-size: 11.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: clamp(26px, 3.05vw, 42px);
+    line-height: 1.14;
+    letter-spacing: -.028em;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .section-sub {
+    margin: 16px 0 0;
+    font-size: clamp(14px, 1.05vw, 15.5px);
+    line-height: 1.7;
+    color: #9a9aa0;
+    max-width: 78ch;
+  }
+
+  .grad-text {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ----------------------------------------------------------------- grid */
+  .three {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 24px);
+  }
+
+  .two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 24px);
+  }
+
+  /* ----------------------------------------------------------------- card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 12px 12px 18px;
+    transition: transform .4s var(--ease), border-color .4s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, .17);
+  }
+
+  .card h3 {
+    margin: 16px 8px 7px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: #f2f2f5;
+  }
+
+  .card p {
+    margin: 0 8px;
+    font-size: 13px;
+    line-height: 1.62;
+    color: #8e8e93;
+  }
+
+  /* ---------------------------------------------------------------- media */
+  .media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #050506;
+    border: 1px solid var(--line);
+    cursor: zoom-in;
+  }
+
+  .media img,
+  .media video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #050506;
+  }
+
+  .media--4x3 { aspect-ratio: 4 / 3; }
+  .media--16x9 { aspect-ratio: 16 / 9; }
+  .media--2x1 { aspect-ratio: 2 / 1; }
+  .media--3x2 { aspect-ratio: 3 / 2; }
+  .media--presets { aspect-ratio: 2448 / 752; }
+
+  .media.light {
+    background: #fff;
+    border-color: rgba(255, 255, 255, .16);
+    padding: 10px;
+  }
+
+  .media.light img { background: #fff; }
+
+  .shot {
+    background: #fff;
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-in;
+  }
+
+  .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+  }
+
+  .cap {
+    margin: 14px 4px 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #74747a;
+  }
+
+  /* ------------------------------------------------------------- sub block */
+  .sub-block { margin-top: clamp(40px, 4.6vw, 64px); }
+
+  .sub-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 20px;
+    margin-bottom: 18px;
+  }
+
+  .sub-head h3 {
+    margin: 0;
+    font-size: clamp(18px, 1.7vw, 22px);
+    font-weight: 600;
+    letter-spacing: -.015em;
+    color: #f2f2f5;
+  }
+
+  .sub-head p {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #8a8a90;
+  }
+
+  /* ------------------------------------------------------------- algorithm */
+  .algo {
+    display: grid;
+    grid-template-columns: 1.02fr .99fr .99fr;
+    gap: clamp(16px, 2vw, 24px);
+    align-items: stretch;
+  }
+
+  .algo-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 6px;
+  }
+
+  .algo-copy h2 { font-size: clamp(23px, 2.3vw, 31px); }
+
+  .copy-text {
+    margin: 16px 0 0;
+    font-size: 14.5px;
+    line-height: 1.72;
+    color: #b4b4ba;
+  }
+
+  .list {
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+  }
+
+  .list li {
+    position: relative;
+    padding-left: 18px;
+    font-size: 13.2px;
+    line-height: 1.62;
+    color: #a9a9af;
+  }
+
+  .list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .52em;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--grad);
+    box-shadow: 0 0 10px rgba(142, 231, 212, .5);
+  }
+
+  .mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 22px;
+  }
+
+  .mini-stats div { background: #0d0d10; padding: 14px 12px; }
+
+  .mini-stats b {
+    display: block;
+    font-size: clamp(20px, 1.9vw, 25px);
+    font-weight: 600;
+    letter-spacing: -.02em;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mini-stats b.grad-text { color: transparent; }
+
+  .mini-stats span {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #74747a;
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel .cap { margin-top: auto; padding-top: 14px; }
+
+  /* --------------------------------------------------------------- presets */
+  .preset-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 22px;
+  }
+
+  .tag {
+    font-size: 12px;
+    color: #b9b9bf;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgba(255, 255, 255, .028);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ----------------------------------------------------------------- split */
+  .split {
+    display: grid;
+    grid-template-columns: .95fr 1.05fr;
+    gap: clamp(28px, 4vw, 58px);
+    align-items: center;
+  }
+
+  .split .copy-text { margin-top: 18px; }
+
+  .figure-plain { margin: 0; }
+
+  /* ---------------------------------------------------------------- export */
+  .export-card {
+    display: grid;
+    grid-template-columns: 1.02fr .98fr;
+    gap: clamp(24px, 3.4vw, 52px);
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 26px;
+    padding: clamp(16px, 2.4vw, 30px);
+  }
+
+  .export-card h2 { font-size: clamp(23px, 2.4vw, 33px); }
+
+  /* ---------------------------------------------------------------- footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: clamp(52px, 6.5vw, 80px) 0 40px;
+    background: #000;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1.1fr .75fr;
+    gap: clamp(26px, 4vw, 60px);
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .footer-brand .brand-mark { width: 16px; height: 16px; }
+
+  .footer-text {
+    margin: 14px 0 0;
+    font-size: 13px;
+    line-height: 1.75;
+    color: #85858b;
+  }
+
+  .footer-label {
+    margin: 0 0 14px;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #6e6e73;
+  }
+
+  .paper-list { display: grid; gap: 0; margin: 0; }
+
+  .paper-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+
+  .paper-row a { color: #e2e2e7; transition: color .25s ease; }
+  .paper-row a:hover { color: #fff; }
+
+  .paper-row span {
+    font-size: 10.5px;
+    color: #6e6e73;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer-links a {
+    display: block;
+    font-size: 13px;
+    line-height: 1.9;
+    color: #b4b4ba;
+    transition: color .25s ease;
+  }
+
+  .footer-links a:hover { color: #fff; }
+
+  .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: clamp(34px, 4vw, 52px);
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: #5c5c61;
+  }
+
+  .footer-bottom a { color: #9a9aa0; }
+  .footer-bottom a:hover { color: #fff; }
+
+  /* ---------------------------------------------------------------- zoom */
+  #zoom-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, .86);
+    -webkit-backdrop-filter: blur(9px);
+    backdrop-filter: blur(9px);
+  }
+
+  #zoom-overlay.active { display: flex; }
+
+  #zoom-content {
+    max-width: 94vw;
+    max-height: 90vh;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, .8);
+  }
+
+  #zoom-content img,
+  #zoom-content video {
+    display: block;
+    max-width: 94vw;
+    max-height: 90vh;
+  }
+
+  /* -------------------------------------------------------------- motion */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .9s var(--ease), transform .9s var(--ease);
+  }
+
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ------------------------------------------------------------ responsive */
+  @media (max-width: 1120px) {
+    .nav-links { gap: 18px; }
+  }
+
+  @media (max-width: 1080px) {
+    .nav-links { display: none; }
+    .lang { margin-left: auto; }
+  }
+
+  @media (max-width: 1040px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+    .hero-copy { gap: 22px; }
+    .lede { max-width: 66ch; }
+    .algo { grid-template-columns: 1fr 1fr; }
+    .algo-copy { grid-column: 1 / -1; }
+    .split { grid-template-columns: 1fr; gap: 30px; }
+  }
+
+  @media (max-width: 900px) {
+    .three { grid-template-columns: 1fr; }
+    .two { grid-template-columns: 1fr; }
+    .export-card { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .presets-media { aspect-ratio: 16 / 9; }
+  }
+
+  @media (max-width: 680px) {
+    .algo { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .media--4x3 { aspect-ratio: 16 / 10; }
+    .media--3x2 { aspect-ratio: 4 / 3; }
+    .footer-bottom { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+
+<!-- ------------------------------------------------------------------ nav -->
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#overview">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>LidarSIM</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#overview" data-i18n="nav_overview">概览</a>
+      <a href="#perception" data-i18n="nav_perception">感知仿真</a>
+      <a href="#algorithm" data-i18n="nav_algorithm">算法加速</a>
+      <a href="#presets" data-i18n="nav_presets">雷达预设</a>
+      <a href="#sumo" data-i18n="nav_sumo">SUMO 联仿</a>
+      <a href="#evaluation" data-i18n="nav_eval">感知评价</a>
+      <a href="#export" data-i18n="nav_export">标注导出</a>
+      <a class="back" href="https://yangma93.github.io/CRSLP-Benchmarking-cooperative-roadside-lidar-placement/" data-i18n="nav_back">← CRSLP</a>
+    </nav>
+
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="zh" class="active">中文</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- --------------------------------------------------------------- hero -->
+  <section class="hero" id="overview">
+    <div class="container hero-grid">
+      <figure class="hero-figure reveal">
+        <img src="Lidar%20sim.gif"
+             alt="LidarSIM 在真实道路环境点云上仿真多路激光雷达点云的动态演示">
+      </figure>
+
+      <div class="hero-copy reveal">
+        <div>
+          <p class="eyebrow" data-i18n="hero_eyebrow">车路协同感知 · 点云仿真 · SUMO 联动</p>
+          <h1>
+            <span class="grad">LidarSIM</span><span data-i18n="colon">：</span><br>
+            <span data-i18n="hero_title_rest">以真实环境点云为背景的车路协同感知仿真</span>
+          </h1>
+          <p class="lede" data-i18n="hero_lede">
+            LidarSIM 以真实道路环境点云为背景，基于 GPU 并行 ray-casting 仿真多路路侧与车载 LiDAR，
+            内置物理强度、扫描时序运动伪影、雨雪杂波与多雷达布设对比，并将感知结果回写 SUMO 形成闭环，
+            为车路协同感知研究提供可复现的仿真与评价平台。
+          </p>
+        </div>
+        <div class="chips">
+          <span class="chip" data-i18n="chip_rou">路侧 / 车载多雷达</span>
+          <span class="chip" data-i18n="chip_preset">10 种雷达预设</span>
+          <span class="chip" data-i18n="chip_phys">物理强度模型</span>
+          <span class="chip" data-i18n="chip_weather">雨 / 雪天气</span>
+          <span class="chip" data-i18n="chip_sumo">SUMO 闭环</span>
+          <span class="chip" data-i18n="chip_export">OpenCOOD 导出</span>
+        </div>
       </div>
     </div>
-  </nav>
+  </section>
 
-  <!-- 主内容 -->
-  <main class="max-w-6xl mx-auto px-4 py-10">
+  <!-- --------------------------------------------------------- perception -->
+  <section class="section" id="perception">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker" data-i18n="kicker_perception">Perception Simulation</span>
+        <h2 data-i18n="perception_title">车路协同 · 多类天气 · Ego 视角</h2>
+        <p class="section-sub" data-i18n="perception_sub">
+          同一套仿真内核输出路侧、车端与多视角点云，光束模式、逐束时刻与噪声模型保持一致。
+        </p>
+      </div>
 
-    <!-- ========== 第一部分: 工具概览 ========== -->
-    <section id="overview" class="mb-20">
-      <div class="grid md:grid-cols-2 gap-10 items-center">
-        <!-- 左: 视频 -->
-        <div class="rounded-2xl overflow-hidden shadow-xl bg-white border border-slate-200">
-          <video autoplay loop muted playsinline controls class="w-full aspect-video object-cover">
-            <source src="LidarSIM%20demo.mp4" type="video/mp4">
+      <div class="three">
+        <article class="card reveal">
+          <div class="media media--4x3 zoom" data-zoom-type="video" data-zoom-src="CVIP%20sim.mp4">
+            <video autoplay muted loop playsinline preload="metadata">
+              <source src="CVIP%20sim.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3 data-i18n="per1_title">车路协同感知</h3>
+          <p data-i18n="per1_text">路侧与车端点云按目标融合，遮挡区域互补，同一目标获得更完整的观测。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="media media--4x3 zoom" data-zoom-type="video" data-zoom-src="weather%20sim.mp4">
+            <video autoplay muted loop playsinline preload="metadata">
+              <source src="weather%20sim.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3 data-i18n="per2_title">多类天气仿真</h3>
+          <p data-i18n="per2_text">雨、雪粒子谱驱动消光、后向散射与虚假回波，支持感知鲁棒性测试。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="media media--4x3 zoom" data-zoom-type="gif" data-zoom-src="Ego%20vehicle%20sim%20demo.gif">
+            <img src="Ego%20vehicle%20sim%20demo.gif" alt="Ego 视角激光雷达仿真">
+          </div>
+          <h3 data-i18n="per3_title">Ego 视角仿真</h3>
+          <p data-i18n="per3_text">车载 LiDAR 逐帧位姿与逐束扫描时刻，复现真实运动伪影与自车遮挡。</p>
+        </article>
+      </div>
+
+      <div class="sub-block reveal">
+        <div class="sub-head">
+          <h3 data-i18n="placement_title">布设条件变化下的感知性能</h3>
+          <p data-i18n="placement_text">雷达高度、角度与数量的变化，实时反映在覆盖范围与协同 IoU 上。</p>
+        </div>
+        <div class="media media--2x1 zoom" data-zoom-type="video" data-zoom-src="placement%20sim.mp4">
+          <video autoplay muted loop playsinline preload="metadata">
+            <source src="placement%20sim.mp4" type="video/mp4">
           </video>
         </div>
-        <!-- 右: 介绍 -->
-        <div>
-          <h2 class="text-3xl md:text-4xl font-extrabold mb-3 gradient-text cn-block">
-            LidarSIM 多 LiDAR 感知仿真与评价平台
-          </h2>
-          <h2 class="text-3xl md:text-4xl font-extrabold mb-3 gradient-text en-block">
-            LidarSIM — Multi-LiDAR Simulation &amp; Evaluation
-          </h2>
+        <p class="cap" data-i18n="placement_cap">相同交通流、不同部署条件 · 真实路侧点云背景</p>
+      </div>
+    </div>
+  </section>
 
-          <p class="text-slate-600 leading-relaxed cn-block">
-            LidarSIM 面向动态交通场景，基于 GPU 并行 ray-casting 仿真多路
-            <strong>路侧 / 车载 LiDAR</strong> 点云，提供物理真实感的扫描时序运动伪影
-            （rolling shutter）、强度衰减（反射率 × 入射角 × 大气消光）、
-            雨/雪天气杂波、漏检模型等功能，内置完整的协同感知评估链路。
+  <!-- ---------------------------------------------------------- algorithm -->
+  <section class="section" id="algorithm">
+    <div class="container">
+      <div class="algo">
+        <div class="algo-copy reveal">
+          <span class="kicker" data-i18n="kicker_algorithm">Engine Acceleration</span>
+          <h2 data-i18n="algorithm_title">底层算法提升：v1 → v4</h2>
+          <p class="copy-text" data-i18n="algorithm_lede">
+            在不改变任何一帧点云的前提下，重构环境求交与车辆求交的关键路径。
           </p>
-          <p class="text-slate-600 leading-relaxed en-block">
-            LidarSIM targets dynamic traffic scenarios. It simulates multi-roadside /
-            on-board LiDAR point clouds via GPU-parallel ray-casting with
-            physically accurate scanning-order motion artefacts (rolling shutter),
-            intensity attenuation (reflectance × incidence × atmospheric loss),
-            rain/snow clutter and dropout — plus a built-in cooperative-perception
-            evaluation pipeline.
+          <ul class="list">
+            <li data-i18n="algo_li1">块级采样上限收缩、int32 扁平体素索引与单字节占用表</li>
+            <li data-i18n="algo_li2">GPU atomicMin 打包归约，替代候选点全量排序</li>
+            <li data-i18n="algo_li3">逐车 slab 粗筛、单次打包 D2H、法向与扫描模式缓存</li>
+            <li data-i18n="algo_li4">多 CAV 光线合批，减少小 kernel 提交</li>
+          </ul>
+          <div class="mini-stats">
+            <div>
+              <b class="grad-text">1.40×</b>
+              <span data-i18n="algo_stat1">单帧平均加速比</span>
+            </div>
+            <div>
+              <b>0</b>
+              <span data-i18n="algo_stat2">逐元素点云最大差异</span>
+            </div>
+          </div>
+        </div>
+
+        <figure class="panel reveal">
+          <div class="shot zoom" data-zoom-type="image" data-zoom-src="fig_v1_v4_runtime_bar.png">
+            <img src="fig_v1_v4_runtime_bar.png"
+                 alt="四个场景下 v1 与 v4 的单帧平均耗时柱状图" loading="lazy">
+          </div>
+          <p class="cap" data-i18n="algo_fig1_note">四个场景的单帧平均耗时（cold 口径，误差棒 ±1 标准差）。</p>
+        </figure>
+
+        <figure class="panel reveal">
+          <div class="shot zoom" data-zoom-type="image" data-zoom-src="fig_v1_v4_tri_pairs.png">
+            <img src="fig_v1_v4_tri_pairs.png"
+                 alt="单帧耗时随光线-三角面对数量的变化曲线" loading="lazy">
+          </div>
+          <p class="cap" data-i18n="algo_fig2_note">单帧耗时随光线–三角面对数量的变化（折线 + 95% 置信带）。</p>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------ presets -->
+  <section class="section" id="presets">
+    <div class="container">
+      <div class="section-head center reveal">
+        <span class="kicker" data-i18n="kicker_presets">LiDAR Presets</span>
+        <h2 data-i18n="presets_title">支持 10 种 LiDAR 预设</h2>
+        <p class="section-sub" data-i18n="presets_sub">
+          覆盖机械旋转、转镜与非重复扫描三类扫描方式，量程 100–260 m，可按路侧或车端传感器自由选择。
+        </p>
+      </div>
+
+      <div class="media media--presets reveal zoom" data-zoom-type="video" data-zoom-src="lidar%20presets%202x5.mp4">
+        <video autoplay muted loop playsinline preload="metadata">
+          <source src="lidar%20presets%202x5.mp4" type="video/mp4">
+        </video>
+      </div>
+      <p class="cap reveal" data-i18n="presets_cap">2 × 5 预设展示 · 相同场景与交通流</p>
+
+      <div class="preset-chips reveal">
+        <span class="tag">VLP-16</span>
+        <span class="tag">HDL-32</span>
+        <span class="tag">OS1-64</span>
+        <span class="tag">Pandar40</span>
+        <span class="tag">RS128</span>
+        <span class="tag">Hesai ATX</span>
+        <span class="tag">Hesai AT128</span>
+        <span class="tag">Hesai OT128</span>
+        <span class="tag">RoboSense EMX</span>
+        <span class="tag">Livox Horizon</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------------- sumo -->
+  <section class="section" id="sumo">
+    <div class="container">
+      <div class="split">
+        <div class="reveal">
+          <span class="kicker" data-i18n="kicker_sumo">SUMO Co-simulation</span>
+          <h2 data-i18n="sumo_title">与 SUMO 联合仿真，并把感知结果回写</h2>
+          <p class="copy-text" data-i18n="sumo_lede">
+            每一步 SUMO 交通状态驱动在线轨迹，LidarSIM 生成路侧与车端点云并完成 L-shape 协同感知评估；
+            IoU 与感知状态写回 SUMO 车辆颜色与自定义参数，可选 TTC 闭环减速。
           </p>
-
-          <h3 class="mt-6 mb-2 font-bold text-slate-700 cn">输入</h3>
-          <h3 class="mt-6 mb-2 font-bold text-slate-700 en">Input</h3>
-          <ul class="text-sm text-slate-600 space-y-1 cn-block">
-            <li>• <strong>轨迹文件</strong>（Vissim / SUMO 格式）</li>
-            <li>• <strong>道路环境点云</strong>（PLY / H5 含语义）</li>
-            <li>• <strong>车辆三维模型</strong>（STL / PLY / OBJ）</li>
+          <ul class="list">
+            <li data-i18n="sumo_li1">逐帧锁步：绘制完成才推进下一步</li>
+            <li data-i18n="sumo_li2">绿 / 红反馈：IoU 达到阈值即视为协同感知成功</li>
+            <li data-i18n="sumo_li3">支持无背景点云：由 net.xml 生成路面点阵</li>
           </ul>
-          <ul class="text-sm text-slate-600 space-y-1 en-block">
-            <li>• <strong>Vehicle trajectories</strong> (Vissim / SUMO formats)</li>
-            <li>• <strong>Environment point cloud</strong> (PLY / H5 with semantics)</li>
-            <li>• <strong>Vehicle 3D mesh library</strong> (STL / PLY / OBJ)</li>
-          </ul>
-
-          <h3 class="mt-6 mb-2 font-bold text-slate-700 cn">核心能力</h3>
-          <h3 class="mt-6 mb-2 font-bold text-slate-700 en">Capabilities</h3>
-          <div class="flex flex-wrap gap-2 cn-block">
-            <span class="chip">GPU 并行 ray-casting</span>
-            <span class="chip">5 种 LiDAR 预设</span>
-            <span class="chip">物理强度模型</span>
-            <span class="chip">雨/雪天气</span>
-            <span class="chip">运动伪影</span>
-            <span class="chip">L-shape 评估</span>
-            <span class="chip">概率占用网格</span>
-            <span class="chip">OpenCOOD 导出</span>
-          </div>
-          <div class="flex flex-wrap gap-2 en-block">
-            <span class="chip">GPU ray-casting</span>
-            <span class="chip">5 LiDAR presets</span>
-            <span class="chip">Physical intensity</span>
-            <span class="chip">Rain / snow</span>
-            <span class="chip">Motion artefacts</span>
-            <span class="chip">L-shape evaluation</span>
-            <span class="chip">Probabilistic occupancy grid</span>
-            <span class="chip">OpenCOOD export</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== 第二部分: 功能模块 ========== -->
-    <section id="modules" class="mb-20">
-      <h2 class="section-title text-2xl md:text-3xl font-bold text-slate-800 mb-8 cn-block">
-        功能模块
-      </h2>
-      <h2 class="section-title text-2xl md:text-3xl font-bold text-slate-800 mb-8 en-block">
-        Functional Modules
-      </h2>
-
-      <!-- --- 2.1 LiDAR 仿真 --- -->
-      <div class="mb-14">
-        <h3 class="text-xl font-bold text-blue-700 mb-1 cn">① LiDAR 仿真</h3>
-        <h3 class="text-xl font-bold text-blue-700 mb-1 en">① LiDAR Simulation</h3>
-        <p class="text-sm text-slate-500 mb-6 cn">多类型 LiDAR 预设 · 雨雪天气 · 车路协同 · Ego 视角</p>
-        <p class="text-sm text-slate-500 mb-6 en">Multi-type presets · weather · V2X · ego view</p>
-
-        <!-- 前两行为 2 列 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Row 1 Col 1: 多类型路侧 Lidar -->
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="video" data-zoom-src="multi-lidar%20sim.mp4">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
-              <video autoplay loop muted playsinline class="w-full h-full object-cover">
-                <source src="multi-lidar%20sim.mp4" type="video/mp4">
-              </video>
-            </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">多类型路侧 LiDAR 仿真</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Multi-type roadside LiDAR</p>
-          </div>
-          <!-- Row 1 Col 2: 雨雪天气 -->
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="video" data-zoom-src="weather%20sim.mp4">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
-              <video autoplay loop muted playsinline class="w-full h-full object-cover">
-                <source src="weather%20sim.mp4" type="video/mp4">
-              </video>
-            </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">雨雪天气仿真</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Rain / snow weather simulation</p>
-          </div>
-
-          <!-- Row 2 Col 1: 车路协同 -->
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="video" data-zoom-src="CVIP%20sim.mp4">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
-              <video autoplay loop muted playsinline class="w-full h-full object-cover">
-                <source src="CVIP%20sim.mp4" type="video/mp4">
-              </video>
-            </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">车路协同感知 (V2X)</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Vehicle–road cooperative perception (V2X)</p>
-          </div>
-          <!-- Row 2 Col 2: 单车 Ego 视角 -->
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="gif" data-zoom-src="Ego%20vehicle%20sim%20demo.gif">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
-              <img src="Ego%20vehicle%20sim%20demo.gif" alt="Ego vehicle sim" class="w-full h-full object-cover">
-            </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">单车 Ego 视角仿真</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Ego-vehicle simulation</p>
-          </div>
         </div>
 
-        <!-- 第三行为 1 列 -->
-        <div class="grid grid-cols-1 gap-6 mt-6">
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="video" data-zoom-src="placement%20sim.mp4">
-            <div class="aspect-[2/1] rounded-xl overflow-hidden bg-slate-100">
-              <video autoplay loop muted playsinline class="w-full h-full object-cover">
-                <source src="placement%20sim.mp4" type="video/mp4">
-              </video>
-            </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">多 LiDAR 差异化布设展示</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Multi-LiDAR placement comparison</p>
+        <figure class="figure-plain reveal">
+          <div class="shot zoom" data-zoom-type="image" data-zoom-src="sumo%20lidarsim%20cosim.png">
+            <img src="sumo%20lidarsim%20cosim.png"
+                 alt="SUMO 与 LidarSIM 双向联合仿真示意" loading="lazy">
           </div>
-        </div>
+          <p class="cap" data-i18n="sumo_fig_cap">SUMO ↔ LidarSIM：状态驱动与感知反馈的闭环。</p>
+        </figure>
       </div>
 
-      <!-- --- 2.2 感知性能评价 (1x2) --- -->
-      <div class="mb-14">
-        <h3 class="text-xl font-bold text-blue-700 mb-1 cn">② 感知性能评价</h3>
-        <h3 class="text-xl font-bold text-blue-700 mb-1 en">② Perception Evaluation</h3>
-        <p class="text-sm text-slate-500 mb-6 cn">L-shape 检测 · IoU / Dev / Comp · 分类型评估 · CSV 导出</p>
-        <p class="text-sm text-slate-500 mb-6 en">L-shape · IoU / Dev / Comp · per-vType breakdown · CSV</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="video" data-zoom-src="CoP%20metric%20demo.mp4">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
-              <video autoplay loop muted playsinline class="w-full h-full object-cover">
-                <source src="CoP%20metric%20demo.mp4" type="video/mp4">
-              </video>
-            </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">评价结果输出演示</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">Evaluation workflow</p>
+      <div class="three sub-block">
+        <article class="card reveal">
+          <div class="media media--3x2 zoom" data-zoom-type="image" data-zoom-src="sumo%20map.png">
+            <img src="sumo%20map.png" alt="SUMO 底图绘制" loading="lazy">
           </div>
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="image" data-zoom-src="iou_dev_curve.png">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
-              <img src="iou_dev_curve.png" alt="IoU/Dev sequence" class="w-full h-full object-cover">
-            </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">IoU / Dev / Comp 数据展示（CSV）</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">IoU / Dev / Comp time series (CSV)</p>
+          <h3 data-i18n="sumo1_title">底图绘制</h3>
+          <p data-i18n="sumo1_text">SUMO netedit 风格的点云底图编辑器，导出 net.xml 与可直接运行的场景。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="media light media--3x2 zoom" data-zoom-type="image" data-zoom-src="cav%20config.png">
+            <img src="cav%20config.png" alt="CAV 传感配置" loading="lazy">
           </div>
-        </div>
+          <h3 data-i18n="sumo2_title">CAV 传感配置</h3>
+          <p data-i18n="sumo2_text">多车型、多传感器的安装位姿配置，俯 / 侧 / 正视图预览覆盖范围。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="media media--3x2 zoom" data-zoom-type="video" data-zoom-src="sumo%20and%20LidarSIM.mp4">
+            <video autoplay muted loop playsinline preload="metadata">
+              <source src="sumo%20and%20LidarSIM.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3 data-i18n="sumo3_title">联仿示意</h3>
+          <p data-i18n="sumo3_text">SUMO 交通与 LidarSIM 点云锁步推进，感知结果逐步回传。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- evaluation -->
+  <section class="section" id="evaluation">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="kicker" data-i18n="kicker_eval">Evaluation</span>
+        <h2 data-i18n="eval_title">感知性能量化评价</h2>
+        <p class="section-sub" data-i18n="eval_sub">
+          L-shape 拟合与 3D IoU / Dev / Comp 指标，支持分车型统计与 CSV 导出。
+        </p>
       </div>
 
-      <!-- --- 2.3 POG 构建 (1x2) --- -->
-      <div class="mb-14">
-        <h3 class="text-xl font-bold text-blue-700 mb-1 cn">③ 概率占用网格 (POG)</h3>
-        <h3 class="text-xl font-bold text-blue-700 mb-1 en">③ Probabilistic Occupancy Grid</h3>
-        <p class="text-sm text-slate-500 mb-6 cn">逐帧占用平均 · 观测掩码 · BEV / 3D 可视化 · NPZ / MAT 导出</p>
-        <p class="text-sm text-slate-500 mb-6 en">Per-frame occupancy · observation mask · BEV/3D · NPZ/MAT export</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="video" data-zoom-src="pog%20creation.mp4">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
-              <video autoplay loop muted playsinline class="w-full h-full object-cover">
+      <div class="two">
+        <article class="card reveal">
+          <div class="media media--16x9 zoom" data-zoom-type="video" data-zoom-src="CoP%20metric%20demo.mp4">
+            <video autoplay muted loop playsinline preload="metadata">
+              <source src="CoP%20metric%20demo.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3 data-i18n="eval1_title">评价结果输出</h3>
+          <p data-i18n="eval1_text">逐帧输出协同 IoU 与真值框，匹配与未匹配目标同时上报。</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="media light media--16x9 zoom" data-zoom-type="image" data-zoom-src="iou_dev_curve.png">
+            <img src="iou_dev_curve.png" alt="IoU / Dev / Comp 时序曲线" loading="lazy">
+          </div>
+          <h3 data-i18n="eval2_title">IoU / Dev / Comp 曲线</h3>
+          <p data-i18n="eval2_text">单次仿真的指标时序，可导出 CSV 进一步分析。</p>
+        </article>
+      </div>
+
+      <div class="sub-block">
+        <div class="sub-head reveal">
+          <h3 data-i18n="pog_title">概率占用网格（POG）</h3>
+          <p data-i18n="pog_sub">逐帧占用平均与观测掩码，支持 BEV / 3D 可视化与 NPZ / MAT 导出。</p>
+        </div>
+        <div class="two">
+          <article class="card reveal">
+            <div class="media media--4x3 zoom" data-zoom-type="video" data-zoom-src="pog%20creation.mp4">
+              <video autoplay muted loop playsinline preload="metadata">
                 <source src="pog%20creation.mp4" type="video/mp4">
               </video>
             </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">POG 动态构建过程</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">POG construction over time</p>
-          </div>
-          <div class="bg-white rounded-2xl shadow-sm p-3 feature-card"
-               data-zoom-type="image" data-zoom-src="pog_topview.png">
-            <div class="aspect-video rounded-xl overflow-hidden bg-slate-100">
-              <img src="pog_topview.png" alt="POG result" class="w-full h-full object-cover">
+            <h3 data-i18n="pog1_title">POG 动态构建</h3>
+            <p data-i18n="pog1_text">占用概率随轨迹逐帧累积。</p>
+          </article>
+
+          <article class="card reveal">
+            <div class="media light media--4x3 zoom" data-zoom-type="image" data-zoom-src="pog_topview.png">
+              <img src="pog_topview.png" alt="POG 俯视可视化" loading="lazy">
             </div>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 cn">POG 结果可视化</p>
-            <p class="text-center mt-2 text-sm font-semibold text-slate-700 en">POG visualization (BEV)</p>
-          </div>
+            <h3 data-i18n="pog2_title">POG 结果可视化</h3>
+            <p data-i18n="pog2_text">累积占用概率的俯视展示。</p>
+          </article>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ========== 第三部分: 标注数据导出 ========== -->
-    <section id="export" class="mb-10">
-      <div class="grid md:grid-cols-2 gap-10 items-center bg-white rounded-3xl shadow-sm p-6 md:p-10 border border-slate-200">
-        <!-- 左: 视频 -->
-        <div class="rounded-2xl overflow-hidden shadow-md bg-blue-50">
-          <video autoplay loop muted playsinline controls class="w-full aspect-video object-cover">
+  <!-- ------------------------------------------------------------- export -->
+  <section class="section" id="export">
+    <div class="container">
+      <div class="export-card reveal">
+        <div class="media media--16x9 zoom" data-zoom-type="video" data-zoom-src="OpenCOOD%20export.mp4">
+          <video autoplay muted loop playsinline preload="metadata">
             <source src="OpenCOOD%20export.mp4" type="video/mp4">
           </video>
         </div>
-        <!-- 右: 介绍 -->
         <div>
-          <h2 class="text-2xl md:text-3xl font-extrabold mb-3 gradient-text cn-block">
-            标注数据导出 (OpenCOOD)
-          </h2>
-          <h2 class="text-2xl md:text-3xl font-extrabold mb-3 gradient-text en-block">
-            Annotation Export for OpenCOOD
-          </h2>
-          <p class="text-slate-600 leading-relaxed cn-block">
-            为支持协同感知模型训练，指定起止帧后，LidarSIM 支持导出
-            <strong>OpenCOOD 框架</strong>（OPV2V 格式）下的标注数据：
-            每帧生成协同感知点云与 GT BBox，自动按场景编号归档，
-            可直接用于多车辆协同感知模型训练。
+          <span class="kicker" data-i18n="kicker_export">Annotation Export</span>
+          <h2 data-i18n="export_title">标注数据导出（OpenCOOD）</h2>
+          <p class="copy-text" data-i18n="export_lede">
+            指定起止帧后，LidarSIM 可导出 OpenCOOD（OPV2V 风格）标注数据：每帧生成协同感知点云与 GT BBox，
+            按场景编号归档，可直接用于多车辆协同感知模型训练。
           </p>
-          <p class="text-slate-600 leading-relaxed en-block">
-            To support cooperative-perception training, LidarSIM exports
-            <strong>OpenCOOD-format</strong> (OPV2V) annotations given a frame
-            range. Each frame produces cooperative point clouds and GT BBoxes,
-            organised per scene and ready to plug into multi-vehicle
-            cooperative-perception pipelines.
-          </p>
-          <div class="mt-5 flex gap-3 flex-wrap">
-            <span class="chip">scene_00x / 00x / xxxxx.pcd</span>
-            <span class="chip">OpenCOOD yaml</span>
-            <span class="chip">GT BBox 标注</span>
+          <div class="chips" style="margin-top:22px">
+            <span class="chip" data-i18n="export_chip1">scene_00x / 00x / xxxxx.pcd</span>
+            <span class="chip" data-i18n="export_chip2">OpenCOOD yaml</span>
+            <span class="chip" data-i18n="export_chip3">GT BBox 标注</span>
           </div>
         </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+</main>
 
-  <!-- 页脚 -->
-  <footer class="gradient-brand text-white text-center py-8 text-sm mt-6">
-    <p>© 2026 CRSLP Dataset &amp; LidarSIM.
-      <span class="cn">合肥工业大学 马羊副教授团队 维护</span>
-      <span class="en">Maintained by Prof. Yang Ma's Team, Hefei University of Technology</span>
-    </p>
-    <p class="mt-3 flex items-center justify-center gap-3 flex-wrap">
-      <a href="https://github.com/yangma93/CRSLP-Benchmarking-cooperative-roadside-lidar-placement"
-         class="underline hover:text-white/90" target="_blank" rel="noopener">
-        GitHub
-      </a>
-      <span class="mx-1">·</span>
-      <a href="index.html" class="underline hover:text-white/90">
-        <span class="cn">← CRSLP 数据集主页</span>
-        <span class="en">← CRSLP Dataset</span>
-      </a>
-    </p>
-  </footer>
+<!-- ---------------------------------------------------------------- footer -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>LidarSIM</span>
+        </div>
+        <p class="footer-text" data-i18n="footer_blurb">
+          面向车路协同感知的 LiDAR 仿真、SUMO 联仿与评测工具。
+        </p>
+        <p class="footer-text" data-i18n="footer_maintained">
+          合肥工业大学 马羊副教授团队 维护
+        </p>
+      </div>
 
-  <!-- 悬浮预览浮窗 -->
-  <div id="zoom-overlay" role="dialog" aria-label="preview" onclick="closeZoom(event)">
-    <div id="zoom-content"></div>
+      <div>
+        <p class="footer-label" data-i18n="footer_papers">相关论文</p>
+        <div class="paper-list">
+          <div class="paper-row">
+            <a href="https://doi.org/10.1109/TITS.2023.3286384" target="_blank" rel="noopener">IEEE TITS · 2023</a>
+            <span>doi:10.1109/TITS.2023.3286384</span>
+          </div>
+          <div class="paper-row">
+            <a href="https://doi.org/10.1111/mice.13167" target="_blank" rel="noopener">CACAIE · 2024</a>
+            <span>doi:10.1111/mice.13167</span>
+          </div>
+          <div class="paper-row">
+            <a href="https://doi.org/10.1016/j.trc.2025.105473" target="_blank" rel="noopener">Transportation Research Part C · 2026</a>
+            <span>doi:10.1016/j.trc.2025.105473</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="footer-label" data-i18n="footer_links">链接与联系</p>
+        <div class="footer-links">
+          <a href="mailto:mayang@hfut.edu.cn">mayang@hfut.edu.cn</a>
+          <a href="https://github.com/yangma93/CRSLP-Benchmarking-cooperative-roadside-lidar-placement"
+             target="_blank" rel="noopener">GitHub · CRSLP</a>
+          <a href="https://yangma93.github.io/CRSLP-Benchmarking-cooperative-roadside-lidar-placement/"
+             data-i18n="footer_return">← CRSLP 数据集主页</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span data-i18n="footer_copyright">© 2026 CRSLP Dataset &amp; LidarSIM. 保留所有权利。</span>
+      <span data-i18n="footer_built">项目主页 · 纯静态 HTML · 无外部依赖</span>
+    </div>
   </div>
+</footer>
 
-  <script>
-    /* ============== 语言切换 ============== */
-    const STORAGE_KEY = "crslp_lang";
-    const savedLang = (localStorage.getItem(STORAGE_KEY) || "cn").toLowerCase();
-    applyLang(savedLang);
-    document.getElementById("lang-toggle").addEventListener("click", () => {
-      const cur = document.body.classList.contains("lang-en") ? "en" : "cn";
-      const next = cur === "en" ? "cn" : "en";
-      localStorage.setItem(STORAGE_KEY, next);
-      applyLang(next);
-    });
-    function applyLang(lang) {
-      document.body.classList.toggle("lang-en", lang === "en");
-      document.body.classList.toggle("lang-cn", lang === "cn");
-      document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+<!-- ------------------------------------------------------------- overlay -->
+<div id="zoom-overlay" role="dialog" aria-label="preview">
+  <div id="zoom-content"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var I18N = {
+    en: {
+      nav_overview: "Overview",
+      nav_perception: "Perception",
+      nav_algorithm: "Acceleration",
+      nav_presets: "Presets",
+      nav_sumo: "SUMO Co-sim",
+      nav_eval: "Evaluation",
+      nav_export: "Export",
+      nav_back: "← CRSLP",
+
+      hero_eyebrow: "V2X perception · Point-cloud simulation · SUMO co-simulation",
+      colon: ": ",
+      hero_title_rest: "Vehicle–road cooperative perception simulated on real environment point clouds",
+      hero_lede: "LidarSIM renders multi-roadside and on-board LiDAR point clouds against real road environment point clouds with GPU-parallel ray casting. Physical intensity, rolling-shutter motion artefacts, rain/snow clutter and multi-LiDAR placement comparison are built in, and every perception result can be fed back to SUMO in a closed loop.",
+      chip_rou: "Roadside / on-board multi-LiDAR",
+      chip_preset: "10 LiDAR presets",
+      chip_phys: "Physical intensity",
+      chip_weather: "Rain / snow weather",
+      chip_sumo: "SUMO closed loop",
+      chip_export: "OpenCOOD export",
+
+      kicker_perception: "Perception Simulation",
+      perception_title: "Cooperative, weather and ego-view simulation",
+      perception_sub: "One simulation kernel produces roadside, on-board and multi-view point clouds, with identical beam patterns, per-beam timing and noise models.",
+      per1_title: "Cooperative perception",
+      per1_text: "Roadside and on-board clouds are fused per target, complementing occluded regions so that the same vehicle is observed more completely.",
+      per2_title: "Multi-weather simulation",
+      per2_text: "Rain and snow particle spectra drive extinction, backscatter and false returns for perception robustness tests.",
+      per3_title: "Ego-view simulation",
+      per3_text: "Per-frame vehicle poses and per-beam scan times reproduce real motion artefacts and self-occlusion.",
+      placement_title: "Placement versus perception performance",
+      placement_text: "Changes in LiDAR height, orientation and count are reflected immediately in coverage and cooperative IoU.",
+      placement_cap: "Identical traffic, varying deployment conditions · real roadside point-cloud background",
+
+      kicker_algorithm: "Engine Acceleration",
+      algorithm_title: "From v1 to v4: a faster core, identical clouds",
+      algorithm_lede: "The critical paths of environment and vehicle ray casting were rebuilt without changing a single point of any frame.",
+      algo_li1: "Block-wise sampling caps, int32 flat voxel indices and a one-byte occupancy table",
+      algo_li2: "GPU atomicMin packed reduction instead of sorting all candidate points",
+      algo_li3: "Per-vehicle slab culling, a single packed D2H copy, normal and scan-pattern caches",
+      algo_li4: "Batched multi-CAV rays to cut small kernel launches",
+      algo_stat1: "average per-frame speed-up",
+      algo_stat2: "max element-wise cloud difference",
+      algo_fig1_note: "Mean per-frame runtime over four scenes (cold path, error bars ±1 SD).",
+      algo_fig2_note: "Runtime versus the number of ray–triangle pairs (95% confidence band).",
+
+      kicker_presets: "LiDAR Presets",
+      presets_title: "Ten LiDAR presets",
+      presets_sub: "Mechanical spinning, rotating-mirror and non-repetitive scanning, 100–260 m range, selectable per roadside or on-board sensor.",
+      presets_cap: "2 × 5 preset gallery · identical scene and traffic",
+
+      kicker_sumo: "SUMO Co-simulation",
+      sumo_title: "Co-simulate with SUMO, write perception back",
+      sumo_lede: "Each SUMO step drives online trajectories; LidarSIM generates roadside and CAV point clouds and runs L-shape cooperative evaluation. IoU and perception state are written back to SUMO as vehicle colours and custom parameters, with optional TTC-based deceleration.",
+      sumo_li1: "Lock-step: SUMO advances only after the frame is rendered",
+      sumo_li2: "Green / red feedback: IoU above threshold means cooperative perception succeeded",
+      sumo_li3: "Works without a background cloud: road-surface points are generated from net.xml",
+      sumo_fig_cap: "SUMO ↔ LidarSIM: state-driven simulation and perception feedback.",
+      sumo1_title: "Road-network drawing",
+      sumo1_text: "A point-cloud basemap editor in the style of SUMO netedit, exporting net.xml and a runnable scenario.",
+      sumo2_title: "CAV sensor configuration",
+      sumo2_text: "Multi-class, multi-sensor mounting poses with top, side and front coverage previews.",
+      sumo3_title: "Synchronised co-simulation",
+      sumo3_text: "SUMO traffic and LidarSIM point clouds advance in lock-step, with perception fed back each step.",
+
+      kicker_eval: "Evaluation",
+      eval_title: "Quantitative perception evaluation",
+      eval_sub: "L-shape fitting with 3D IoU / Dev / Comp, per-vehicle-type statistics and CSV export.",
+      eval1_title: "Evaluation output",
+      eval1_text: "Per-frame cooperative IoU against ground-truth boxes; matched and unmatched targets are both reported.",
+      eval2_title: "IoU / Dev / Comp curves",
+      eval2_text: "Metric time series of one run, exportable to CSV for further analysis.",
+      pog_title: "Probabilistic occupancy grid (POG)",
+      pog_sub: "Per-frame occupancy averaging with an observation mask, BEV/3D visualisation and NPZ/MAT export.",
+      pog1_title: "POG construction",
+      pog1_text: "Occupancy probability accumulates frame by frame along the trajectory.",
+      pog2_title: "POG visualisation",
+      pog2_text: "Top view of the accumulated occupancy probability.",
+
+      kicker_export: "Annotation Export",
+      export_title: "Annotation export (OpenCOOD)",
+      export_lede: "Given a frame range, LidarSIM exports OpenCOOD (OPV2V-style) annotations: per-frame cooperative point clouds and GT boxes, organised per scene and ready for multi-vehicle cooperative-perception training.",
+      export_chip1: "scene_00x / 00x / xxxxx.pcd",
+      export_chip2: "OpenCOOD yaml",
+      export_chip3: "GT BBox",
+
+      footer_blurb: "LiDAR simulation, SUMO co-simulation and evaluation for roadside cooperative perception.",
+      footer_maintained: "Maintained by Prof. Yang Ma's Team, Hefei University of Technology",
+      footer_papers: "Related papers",
+      footer_links: "Links & contact",
+      footer_return: "← CRSLP dataset home",
+      footer_copyright: "© 2026 CRSLP Dataset & LidarSIM. All rights reserved.",
+      footer_built: "Project page · static HTML · no external dependencies"
+    },
+
+    zh: {
+      nav_overview: "概览",
+      nav_perception: "感知仿真",
+      nav_algorithm: "算法加速",
+      nav_presets: "雷达预设",
+      nav_sumo: "SUMO 联仿",
+      nav_eval: "感知评价",
+      nav_export: "标注导出",
+      nav_back: "← CRSLP",
+
+      hero_eyebrow: "车路协同感知 · 点云仿真 · SUMO 联动",
+      colon: "：",
+      hero_title_rest: "以真实环境点云为背景的车路协同感知仿真",
+      hero_lede: "LidarSIM 以真实道路环境点云为背景，基于 GPU 并行 ray-casting 仿真多路路侧与车载 LiDAR，内置物理强度、扫描时序运动伪影、雨雪杂波与多雷达布设对比，并将感知结果回写 SUMO 形成闭环，为车路协同感知研究提供可复现的仿真与评价平台。",
+      chip_rou: "路侧 / 车载多雷达",
+      chip_preset: "10 种雷达预设",
+      chip_phys: "物理强度模型",
+      chip_weather: "雨 / 雪天气",
+      chip_sumo: "SUMO 闭环",
+      chip_export: "OpenCOOD 导出",
+
+      kicker_perception: "Perception Simulation",
+      perception_title: "车路协同 · 多类天气 · Ego 视角",
+      perception_sub: "同一套仿真内核输出路侧、车端与多视角点云，光束模式、逐束时刻与噪声模型保持一致。",
+      per1_title: "车路协同感知",
+      per1_text: "路侧与车端点云按目标融合，遮挡区域互补，同一目标获得更完整的观测。",
+      per2_title: "多类天气仿真",
+      per2_text: "雨、雪粒子谱驱动消光、后向散射与虚假回波，支持感知鲁棒性测试。",
+      per3_title: "Ego 视角仿真",
+      per3_text: "车载 LiDAR 逐帧位姿与逐束扫描时刻，复现真实运动伪影与自车遮挡。",
+      placement_title: "布设条件变化下的感知性能",
+      placement_text: "雷达高度、角度与数量的变化，实时反映在覆盖范围与协同 IoU 上。",
+      placement_cap: "相同交通流、不同部署条件 · 真实路侧点云背景",
+
+      kicker_algorithm: "Engine Acceleration",
+      algorithm_title: "底层算法提升：v1 → v4",
+      algorithm_lede: "在不改变任何一帧点云的前提下，重构环境求交与车辆求交的关键路径。",
+      algo_li1: "块级采样上限收缩、int32 扁平体素索引与单字节占用表",
+      algo_li2: "GPU atomicMin 打包归约，替代候选点全量排序",
+      algo_li3: "逐车 slab 粗筛、单次打包 D2H、法向与扫描模式缓存",
+      algo_li4: "多 CAV 光线合批，减少小 kernel 提交",
+      algo_stat1: "单帧平均加速比",
+      algo_stat2: "逐元素点云最大差异",
+      algo_fig1_note: "四个场景的单帧平均耗时（cold 口径，误差棒 ±1 标准差）。",
+      algo_fig2_note: "单帧耗时随光线–三角面对数量的变化（折线 + 95% 置信带）。",
+
+      kicker_presets: "LiDAR Presets",
+      presets_title: "支持 10 种 LiDAR 预设",
+      presets_sub: "覆盖机械旋转、转镜与非重复扫描三类扫描方式，量程 100–260 m，可按路侧或车端传感器自由选择。",
+      presets_cap: "2 × 5 预设展示 · 相同场景与交通流",
+
+      kicker_sumo: "SUMO Co-simulation",
+      sumo_title: "与 SUMO 联合仿真，并把感知结果回写",
+      sumo_lede: "每一步 SUMO 交通状态驱动在线轨迹，LidarSIM 生成路侧与车端点云并完成 L-shape 协同感知评估；IoU 与感知状态写回 SUMO 车辆颜色与自定义参数，可选 TTC 闭环减速。",
+      sumo_li1: "逐帧锁步：绘制完成才推进下一步",
+      sumo_li2: "绿 / 红反馈：IoU 达到阈值即视为协同感知成功",
+      sumo_li3: "支持无背景点云：由 net.xml 生成路面点阵",
+      sumo_fig_cap: "SUMO ↔ LidarSIM：状态驱动与感知反馈的闭环。",
+      sumo1_title: "底图绘制",
+      sumo1_text: "SUMO netedit 风格的点云底图编辑器，导出 net.xml 与可直接运行的场景。",
+      sumo2_title: "CAV 传感配置",
+      sumo2_text: "多车型、多传感器的安装位姿配置，俯 / 侧 / 正视图预览覆盖范围。",
+      sumo3_title: "联仿示意",
+      sumo3_text: "SUMO 交通与 LidarSIM 点云锁步推进，感知结果逐步回传。",
+
+      kicker_eval: "Evaluation",
+      eval_title: "感知性能量化评价",
+      eval_sub: "L-shape 拟合与 3D IoU / Dev / Comp 指标，支持分车型统计与 CSV 导出。",
+      eval1_title: "评价结果输出",
+      eval1_text: "逐帧输出协同 IoU 与真值框，匹配与未匹配目标同时上报。",
+      eval2_title: "IoU / Dev / Comp 曲线",
+      eval2_text: "单次仿真的指标时序，可导出 CSV 进一步分析。",
+      pog_title: "概率占用网格（POG）",
+      pog_sub: "逐帧占用平均与观测掩码，支持 BEV / 3D 可视化与 NPZ / MAT 导出。",
+      pog1_title: "POG 动态构建",
+      pog1_text: "占用概率随轨迹逐帧累积。",
+      pog2_title: "POG 结果可视化",
+      pog2_text: "累积占用概率的俯视展示。",
+
+      kicker_export: "Annotation Export",
+      export_title: "标注数据导出（OpenCOOD）",
+      export_lede: "指定起止帧后，LidarSIM 可导出 OpenCOOD（OPV2V 风格）标注数据：每帧生成协同感知点云与 GT BBox，按场景编号归档，可直接用于多车辆协同感知模型训练。",
+      export_chip1: "scene_00x / 00x / xxxxx.pcd",
+      export_chip2: "OpenCOOD yaml",
+      export_chip3: "GT BBox 标注",
+
+      footer_blurb: "面向车路协同感知的 LiDAR 仿真、SUMO 联仿与评测工具。",
+      footer_maintained: "合肥工业大学 马羊副教授团队 维护",
+      footer_papers: "相关论文",
+      footer_links: "链接与联系",
+      footer_return: "← CRSLP 数据集主页",
+      footer_copyright: "© 2026 CRSLP Dataset & LidarSIM. 保留所有权利。",
+      footer_built: "项目主页 · 纯静态 HTML · 无外部依赖"
     }
+  };
 
-    /* ============== 点击放大预览 (单击卡片打开弹层) ============== */
-    const overlay = document.getElementById("zoom-overlay");
-    const content = document.getElementById("zoom-content");
-    document.querySelectorAll(".feature-card").forEach(card => {
-      card.addEventListener("click", () => openZoom(card));
+  function applyLang(lang) {
+    var dict = I18N[lang] || I18N.zh;
+    document.documentElement.lang = (lang === "en") ? "en" : "zh-CN";
+
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n");
+      if (dict[key] !== undefined) el.textContent = dict[key];
     });
-    function openZoom(card) {
-      const type = card.dataset.zoomType;
-      const src  = card.dataset.zoomSrc;
+
+    document.querySelectorAll(".lang button").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-lang") === lang);
+    });
+
+    document.title = (lang === "en")
+      ? "LidarSIM — Multi-LiDAR Simulation & Evaluation"
+      : "LidarSIM — 车路协同 LiDAR 仿真与评价平台";
+
+    try { localStorage.setItem("lidarsim-lang", lang); } catch (e) {}
+  }
+
+  document.querySelectorAll(".lang button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      applyLang(btn.getAttribute("data-lang"));
+    });
+  });
+
+  var saved = null;
+  try { saved = localStorage.getItem("lidarsim-lang"); } catch (e) {}
+  var requested = null;
+  try { requested = new URLSearchParams(window.location.search).get("lang"); } catch (e) {}
+  applyLang((requested === "en" || requested === "zh") ? requested : (saved === "en" ? "en" : "zh"));
+
+  /* ------------------------------------------------------- media preview */
+  var overlay = document.getElementById("zoom-overlay");
+  var content = document.getElementById("zoom-content");
+
+  document.querySelectorAll(".zoom").forEach(function (el) {
+    el.addEventListener("click", function () {
+      var type = el.getAttribute("data-zoom-type");
+      var src = el.getAttribute("data-zoom-src");
       content.innerHTML = "";
       if (type === "video") {
-        const v = document.createElement("video");
-        v.src = src; v.autoplay = true; v.loop = true; v.muted = true;
-        v.playsInline = true; v.controls = true;
+        var v = document.createElement("video");
+        v.src = src;
+        v.autoplay = true;
+        v.loop = true;
+        v.muted = true;
+        v.playsInline = true;
+        v.controls = true;
         content.appendChild(v);
       } else {
-        const img = document.createElement("img");
-        img.src = src; img.alt = "preview";
+        var img = document.createElement("img");
+        img.src = src;
+        img.alt = "preview";
         content.appendChild(img);
       }
       overlay.classList.add("active");
-    }
-    function closeZoom(e) {
-      if (e && e.target !== overlay && e.target.id !== "zoom-overlay") return;
-      const v = content.querySelector("video");
-      if (v) { v.pause(); v.remove(); }
-      overlay.classList.remove("active");
-      content.innerHTML = "";
-    }
-    document.addEventListener("keydown", e => { if (e.key === "Escape") closeZoom(); });
-  </script>
+    });
+  });
+
+  function closeZoom(e) {
+    if (e && e.target !== overlay) return;
+    var v = content.querySelector("video");
+    if (v) { v.pause(); v.removeAttribute("src"); }
+    overlay.classList.remove("active");
+    content.innerHTML = "";
+  }
+
+  overlay.addEventListener("click", closeZoom);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeZoom(); });
+
+  /* ---------------------------------------------------------- scroll reveal */
+  var items = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .08, rootMargin: "0px 0px -6% 0px" });
+    items.forEach(function (el) { io.observe(el); });
+  } else {
+    items.forEach(function (el) { el.classList.add("in"); });
+  }
+})();
+</script>
 </body>
 </html>
